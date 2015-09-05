@@ -109,6 +109,13 @@ void CPU_CACHE_Enable(void);
 AVDictionary *format_opts = NULL;
 void *_impure_ptr = NULL;
 
+static void Error_Handler(void)
+{
+  BSP_LED_Init(LED1);
+  BSP_LED_On(LED1);
+  while(1){}
+}
+
 int __errno(int e)
 {
   printf("[%s]: %i\n", __FUNCTION__, e);
@@ -126,7 +133,7 @@ int __fpclassifyd (double x)
 
 int decode_interrupt_cb(void *ctx)
 {
-  printf("[%s]\n", __FUNCTION__);
+//  printf("[%s]\n", __FUNCTION__);
     return 0;
 }
 
@@ -137,7 +144,7 @@ static char tmp_file_name[128];
 
 size_t read(int fd, void *buf, size_t nbyte)
 {
-  printf("[%s]\n", __FUNCTION__);
+//  printf("[%s]\n", __FUNCTION__);
     size_t size = 0;
     f_read(&tmp_fil, buf, nbyte, &size);
     return size;
@@ -207,29 +214,38 @@ typedef struct {
 int stat(const char *path, struct stat *buf)
 {
     printf("[%s]\n", __FUNCTION__);
-    memset(buf, 0, sizeof(*buf));
     FILINFO info;
     int ret = f_stat(path, &info);
-    buf->st_size = info.fsize;
+    if(buf) {
+        memset(buf, 0, sizeof(*buf));
+        buf->st_size = info.fsize;
+    }
     return ret;
 }
 
 int fstat(int fd, struct stat *buf)
 {
   printf("[%s]\n", __FUNCTION__);
-    memset(buf, 0, sizeof(*buf));
     FILINFO info;
-    int ret = f_stat(tmp_file_name, &info);
-    buf->st_size = info.fsize;
+    int ret = f_stat(tmp_file_name, NULL/*&info*/);
+    if(buf) {
+        memset(buf, 0, sizeof(*buf));
+        buf->st_size = info.fsize;
+    }
     return ret;
 }
 
-size_t lseek(int fd, size_t offset, int whence)
+#define	SEEK_SET	0
+#define	SEEK_CUR	1
+#define	SEEK_END	2
+long lseek(int fd, long offset, int whence)
 {
-  printf("[%s]\n", __FUNCTION__);
+  printf("[%s] whence: %d, offset: %d\n", __FUNCTION__, whence, offset);
   static int cur = 0;
-  if(whence == 1)
+  if(whence == SEEK_CUR)
     offset += cur;
+  else if (whence == SEEK_END)
+    offset += tmp_fil.fsize;
   if(f_lseek(&tmp_fil, offset) == FR_OK)
     cur = offset;
   return cur;
@@ -270,17 +286,11 @@ void __assert_func(const char *_file, int _line, const char *_func, const char *
 
 static void log_cb(void* ptr, int level, const char* fmt, va_list vl)
 {
-  printf(fmt, vl);
+    vprintf(fmt, vl);
 }
 
 static int mount_sdcard()
 {
-//    FRESULT res;
-
-//    FATFS SDFatFs;  /* File system object for SD card logical drive */
-//    FIL MyFile;     /* File object */
-//    char SDPath[4]; /* SD card logical drive path */
-
     /*##-1- Link the micro SD disk I/O driver ##################################*/
     if(FATFS_LinkDriver(&SD_Driver, SDPath) != FR_OK)
         return -1;
@@ -324,7 +334,7 @@ static int mount_sdcard()
 static int play(const char *filename)
 {
     int ret = 0;
-#if 1
+
     AVFormatContext *ic = NULL;
     int scan_all_pmts_set = 0;
 
@@ -345,10 +355,24 @@ static int play(const char *filename)
         av_dict_set(&format_opts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
         scan_all_pmts_set = 1;
     }
-    ret = avformat_open_input(&ic, filename, NULL, &format_opts);
 
+    if (!av_dict_get(format_opts, "analyzeduration", NULL, AV_DICT_MATCH_CASE))
+        av_dict_set(&format_opts, "analyzeduration", "10000", AV_DICT_DONT_OVERWRITE);
+
+    if (!av_dict_get(format_opts, "probesize", NULL, AV_DICT_MATCH_CASE))
+        av_dict_set(&format_opts, "probesize", "10000", AV_DICT_DONT_OVERWRITE);
+
+    if((ret = avformat_open_input(&ic, filename, NULL, &format_opts)))
+       goto fail;
+
+    if(avformat_find_stream_info(ic, &format_opts) < 0)
+       goto fail;
+
+    av_dump_format(ic, 0, filename, 0);
+
+    return 0;
 fail:
-#endif
+    Error_Handler();
     return ret;
 }
 
@@ -408,7 +432,10 @@ int main(void)
   /* Initialize RTC */
   k_CalendarBkupInit();
 
-  play("x264.mkv");
+//  play("test1.mp4");
+//  play("test5.mpeg");
+//  play("test6.avi");
+  play("test.mkv");
 
 #if 0
   /* Create GUI task */
