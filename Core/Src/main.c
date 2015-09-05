@@ -70,6 +70,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include <string.h>
 
 /* Private typedef -----------------------------------------------------------*/
 typedef struct
@@ -105,6 +106,16 @@ void SystemClock_Config(void);
 void CPU_CACHE_Enable(void);
 
 /*============================================================================*/
+#define LCD_X_SIZE  RK043FN48H_WIDTH
+#define LCD_Y_SIZE  RK043FN48H_HEIGHT
+#define FRAME_BUFFER_OFFSET (LCD_X_SIZE * LCD_Y_SIZE * 2)
+
+void show(char *data);
+
+DMA2D_HandleTypeDef Dma2dHandle;
+uint32_t lcd_fb_start = 0;
+uint32_t frameBufferAddress = 0;
+volatile uint32_t DMA2D_completed = 0;
 
 AVDictionary *format_opts = NULL;
 void *_impure_ptr = NULL;
@@ -335,7 +346,7 @@ static int play(const char *filename)
 {
     int ret = 0;
 
-    AVFormatContext *ic = NULL;
+    AVFormatContext *pFormatCtx = NULL;
     int scan_all_pmts_set = 0;
 
     av_log_set_callback(&log_cb);
@@ -343,32 +354,138 @@ static int play(const char *filename)
 
     mount_sdcard();
 
-    ic = avformat_alloc_context();
-    if (!ic) {
+    pFormatCtx = avformat_alloc_context();
+    if (!pFormatCtx) {
         av_log(NULL, AV_LOG_FATAL, "Could not allocate context.\n");
         ret = AVERROR(ENOMEM);
         goto fail;
     }
-    ic->interrupt_callback.callback = decode_interrupt_cb;
-    ic->interrupt_callback.opaque = NULL;
+    pFormatCtx->interrupt_callback.callback = decode_interrupt_cb;
+    pFormatCtx->interrupt_callback.opaque = NULL;
     if (!av_dict_get(format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE)) {
         av_dict_set(&format_opts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
         scan_all_pmts_set = 1;
     }
 
-    if (!av_dict_get(format_opts, "analyzeduration", NULL, AV_DICT_MATCH_CASE))
-        av_dict_set(&format_opts, "analyzeduration", "10000", AV_DICT_DONT_OVERWRITE);
+//    if (!av_dict_get(format_opts, "analyzeduration", NULL, AV_DICT_MATCH_CASE))
+//        av_dict_set(&format_opts, "analyzeduration", "10000", AV_DICT_DONT_OVERWRITE);
 
-    if (!av_dict_get(format_opts, "probesize", NULL, AV_DICT_MATCH_CASE))
-        av_dict_set(&format_opts, "probesize", "10000", AV_DICT_DONT_OVERWRITE);
+//    if (!av_dict_get(format_opts, "probesize", NULL, AV_DICT_MATCH_CASE))
+//        av_dict_set(&format_opts, "probesize", "10000", AV_DICT_DONT_OVERWRITE);
 
-    if((ret = avformat_open_input(&ic, filename, NULL, &format_opts)))
+    if((ret = avformat_open_input(&pFormatCtx, filename, NULL, &format_opts)))
        goto fail;
 
-    if(avformat_find_stream_info(ic, &format_opts) < 0)
+    if(avformat_find_stream_info(pFormatCtx, &format_opts) < 0)
        goto fail;
 
-    av_dump_format(ic, 0, filename, 0);
+    av_dump_format(pFormatCtx, 0, filename, 0);
+
+    // Find the first video stream
+    int i, videoStream=-1;
+    for(i = 0; i < pFormatCtx->nb_streams; i++)
+        if(pFormatCtx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
+        videoStream = i;
+        break;
+    }
+
+    if(videoStream == -1)
+        goto fail; // Didn't find a video stream
+
+    // Get a pointer to the codec context for the video stream
+    AVCodecContext *pCodecCtxOrig  = pFormatCtx->streams[videoStream]->codec;
+
+    // Find the decoder for the video stream
+    AVCodec *pCodec = avcodec_find_decoder(pCodecCtxOrig->codec_id);
+    if(pCodec == NULL) {
+      printf("Unsupported codec!\n");
+      goto fail; // Codec not found
+    }
+
+    // Copy context
+    AVCodecContext *pCodecCtx = avcodec_alloc_context3(pCodec);
+    if(avcodec_copy_context(pCodecCtx, pCodecCtxOrig) != 0) {
+      printf("Couldn't copy codec context");
+      goto fail; // Error copying codec context
+    }
+    // Open codec
+    if(avcodec_open2(pCodecCtx, pCodec, &format_opts) < 0)
+      goto fail; // Could not open codec
+
+    // Allocate video frame
+    AVFrame *pFrame = av_frame_alloc();
+
+    int width = 480;
+    int height = 272;
+    // Allocate an AVFrame structure
+    AVFrame *pFrameRGB = av_frame_alloc();
+    if(pFrameRGB == NULL)
+      goto fail;
+
+    uint8_t *buffer = NULL;
+    int numBytes;
+    // Determine required buffer size and allocate buffer
+    numBytes=avpicture_get_size(PIX_FMT_RGB565LE, /*pCodecCtx->*/width,
+                                /*pCodecCtx->*/height);
+    buffer = (uint8_t*)av_malloc(numBytes*sizeof(uint8_t));
+
+    // Assign appropriate parts of buffer to image planes in pFrameRGB
+    // Note that pFrameRGB is an AVFrame, but AVFrame is a superset
+    // of AVPicture
+    avpicture_fill((AVPicture *)pFrameRGB, buffer, PIX_FMT_RGB565LE,
+                    /*pCodecCtx->*/width, /*pCodecCtx->*/height);
+
+    struct SwsContext *sws_ctx = NULL;
+    int frameFinished;
+    AVPacket packet;
+    // initialize SWS context for software scaling
+    sws_ctx = sws_getContext(pCodecCtx->width,
+        pCodecCtx->height,
+        pCodecCtx->pix_fmt,
+        width,
+        height,
+        PIX_FMT_RGB565LE,
+        SWS_BILINEAR,
+        NULL,
+        NULL,
+        NULL
+        );
+
+    while(av_read_frame(pFormatCtx, &packet)>=0) {
+      // Is this a packet from the video stream?
+      if(packet.stream_index==videoStream) {
+        // Decode video frame
+        avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished, &packet);
+
+        // Did we get a video frame?
+        if(frameFinished) {
+        // Convert the image from its native format to RGB
+            sws_scale(sws_ctx, (uint8_t const * const *)pFrame->data,
+              pFrame->linesize, 0, pCodecCtx->height,
+              pFrameRGB->data, pFrameRGB->linesize);
+
+            // Save the frame to disk
+            show(pFrameRGB->data[0]);
+        }
+      }
+
+      // Free the packet that was allocated by av_read_frame
+      av_free_packet(&packet);
+    }
+
+    // Free the RGB image
+    av_free(buffer);
+    av_free(pFrameRGB);
+
+    // Free the YUV frame
+    av_free(pFrame);
+
+    // Close the codecs
+    avcodec_close(pCodecCtx);
+    avcodec_close(pCodecCtxOrig);
+
+    // Close the video file
+    avformat_close_input(&pFormatCtx);
 
     return 0;
 fail:
@@ -376,6 +493,73 @@ fail:
     return ret;
 }
 
+static void TransferComplete(DMA2D_HandleTypeDef *hdma2d)
+{
+  DMA2D_completed = 1;
+}
+
+static void TransferError(DMA2D_HandleTypeDef *hdma2d)
+{
+  Error_Handler();
+}
+
+static void DMA2D_Config(int32_t x_size, int32_t x_size_orig, uint32_t ColorMode)
+{
+  /* Configure the DMA2D Mode, Color Mode and output offset */
+  Dma2dHandle.Init.Mode         = DMA2D_M2M_PFC; /* DMA2D mode Memory to Memory with Pixel Format Conversion */
+  Dma2dHandle.Init.ColorMode    = DMA2D_RGB565; /* DMA2D Output color mode is RGB565 (16 bpp) */
+  Dma2dHandle.Init.OutputOffset = (LCD_X_SIZE - x_size) ; /* No offset in output */
+
+  /* DMA2D Callbacks Configuration */
+  Dma2dHandle.XferCpltCallback  = TransferComplete;
+  Dma2dHandle.XferErrorCallback = TransferError;
+
+  /* Foreground layer Configuration : layer 1 */
+  Dma2dHandle.LayerCfg[1].AlphaMode = DMA2D_REPLACE_ALPHA;
+  Dma2dHandle.LayerCfg[1].InputAlpha = 0xFF;
+  Dma2dHandle.LayerCfg[1].InputColorMode = ColorMode; /* Layer 1 input format */
+  Dma2dHandle.LayerCfg[1].InputOffset = x_size_orig - x_size ; /* No offset in input */
+
+   /* Background layer Configuration */
+  Dma2dHandle.LayerCfg[0].AlphaMode = DMA2D_REPLACE_ALPHA;
+  Dma2dHandle.LayerCfg[0].InputAlpha = 0xFF; /* 127 : semi-transparent */
+  Dma2dHandle.LayerCfg[0].InputColorMode = ColorMode;
+  Dma2dHandle.LayerCfg[0].InputOffset = (LCD_X_SIZE - x_size) ; /* No offset in input */
+
+  Dma2dHandle.Instance = DMA2D;
+
+  /* DMA2D Initialization */
+  if(HAL_DMA2D_Init(&Dma2dHandle) != HAL_OK)
+  {
+    /* Initialization Error */
+    Error_Handler();
+  }
+
+  if(HAL_DMA2D_ConfigLayer(&Dma2dHandle, 1) != HAL_OK)
+  {
+    /* Initialization Error */
+    Error_Handler();
+  }
+
+   if(HAL_DMA2D_ConfigLayer(&Dma2dHandle, 0) != HAL_OK)
+  {
+    /* Initialization Error */
+    Error_Handler();
+  }
+}
+
+void show(char *data)
+{
+    DMA2D_Config(LCD_X_SIZE, LCD_X_SIZE, CM_RGB565);
+    HAL_DMA2D_ConfigLayer(&Dma2dHandle, 1);
+    HAL_DMA2D_Start_IT(&Dma2dHandle, (uint32_t)data, frameBufferAddress,
+                       LCD_X_SIZE, LCD_Y_SIZE);
+
+    // wait till the transfer is done
+    while(DMA2D_completed == 0);  // here the MCU is doing nothing - can do other tasks or go low power
+    DMA2D_completed = 0;
+    BSP_LCD_SetLayerAddress(0, frameBufferAddress);
+}
 
 /** @defgroup MAIN_Private_FunctionPrototypes
 * @{
@@ -432,10 +616,22 @@ int main(void)
   /* Initialize RTC */
   k_CalendarBkupInit();
 
+  //===== LCD
+  lcd_fb_start = (uint32_t)malloc(2 * FRAME_BUFFER_OFFSET);
+  frameBufferAddress = lcd_fb_start + FRAME_BUFFER_OFFSET;
+
+  BSP_LCD_Init();
+  BSP_LCD_LayerRgb565Init(0, lcd_fb_start);
+//  BSP_LCD_SetFont(&Font12);
+  BSP_LCD_DisplayOn();
+
 //  play("test1.mp4");
 //  play("test5.mpeg");
-//  play("test6.avi");
-  play("test.mkv");
+  play("test6.avi");
+
+//  char filename[64] = {0};
+//  scanf("%s", filename);
+//  play(filename);
 
 #if 0
   /* Create GUI task */
@@ -481,6 +677,31 @@ int main(void)
   /* We should never get here as control is now taken by the scheduler */
   for( ;; );
 }
+
+void HAL_DMA2D_MspInit(DMA2D_HandleTypeDef *hdma2d)
+{
+  /*##-1- Enable peripherals and GPIO Clocks #################################*/
+  __HAL_RCC_DMA2D_CLK_ENABLE();
+
+  /*##-2- NVIC configuration  ################################################*/
+  /* NVIC configuration for DMA2D transfer complete interrupt */
+  HAL_NVIC_SetPriority(DMA2D_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2D_IRQn);
+}
+
+//static GPIO_InitTypeDef  GPIO_InitStruct;
+
+//void HAL_MspInit(void)
+//{
+//  __HAL_RCC_GPIOI_CLK_ENABLE();
+//
+//  GPIO_InitStruct.Pin = (GPIO_PIN_3);
+//  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+//  GPIO_InitStruct.Pull = GPIO_PULLUP;
+//  GPIO_InitStruct.Speed = GPIO_SPEED_FAST;
+//
+//  HAL_GPIO_Init(GPIOI, &GPIO_InitStruct);
+//}
 
 /**
   * @brief  Start task

@@ -40,6 +40,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "ethernetif.h"
+#include "stm32746g_discovery_lcd.h"
  /** @addtogroup CORE
   * @{
   */
@@ -58,6 +59,7 @@ extern HCD_HandleTypeDef             hhcd;
 extern SAI_HandleTypeDef             haudio_out_sai;
 extern SAI_HandleTypeDef             haudio_in_sai;
 extern QSPI_HandleTypeDef            QSPIHandle;
+extern DMA2D_HandleTypeDef           Dma2dHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 extern void xPortSysTickHandler(void);
@@ -86,6 +88,8 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* Go to infinite loop when Hard Fault exception occurs */
+  BSP_LED_Init(LED1);
+  BSP_LED_On(LED1);
   while (1)
   {
   }
@@ -231,14 +235,14 @@ void ETH_IRQHandler(void)
 //  ETHERNET_IRQHandler();
 }
 
-
-
 /**
-  * @}
+  * @brief  This function handles DMA2D Handler.
+  * @param  None
+  * @retval None
   */
-
-/**
-  * @}
-  */
+void DMA2D_IRQHandler(void)
+{
+  HAL_DMA2D_IRQHandler(&Dma2dHandle);
+}
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

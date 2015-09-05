@@ -12,7 +12,7 @@ ByteLimit=50
 stlinkserialNo=114C5BB8
 stlinkfoundProbes=
 [DebugChecksum]
-Checksum=2089471079
+Checksum=1415202729
 [Exceptions]
 StopOnUncaught=_ 0
 StopOnThrow=_ 0
@@ -70,9 +70,11 @@ SumSortOrder=0
 [Disassemble mode]
 mode=0
 [Breakpoints2]
-Bp0=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\main.c}.339.9" 0 0 1 "" 0 "" 0
-Bp1=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\main.c}.373.5" 0 0 1 "" 0 "" 0
-Count=2
+Bp0=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\main.c}.490.5" 0 0 1 "" 0 "" 0
+Bp1=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\main.c}.492.5" 0 0 1 "" 0 "" 0
+Bp2=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\main.c}.357.18" 0 0 1 "" 0 "" 0
+Bp3=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\main.c}.406.21" 0 0 1 "" 0 "" 0
+Count=4
 [Log file]
 LoggingEnabled=_ 0
 LogFile=_ ""
@@ -84,7 +86,7 @@ LogFile=_ ""
 Count=0
 SuppressDialog=0
 [DriverProfiling]
-Enabled=0
+Enabled=1
 Mode=3
 Graph=0
 Symbiont=0

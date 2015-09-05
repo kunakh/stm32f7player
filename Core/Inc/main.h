@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file    main.h 
+  * @file    main.h
   * @author  MCD Application Team
   * @version V1.0.1
   * @date    25-June-2015
@@ -16,8 +16,8 @@
   *
   *        http://www.st.com/software_license_agreement_liberty_v2
   *
-  * Unless required by applicable law or agreed to in writing, software 
-  * distributed under the License is distributed on an "AS IS" BASIS, 
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   * See the License for the specific language governing permissions and
   * limitations under the License.
@@ -32,7 +32,7 @@
 #ifdef __cplusplus
  extern "C" {
 #endif
-   
+
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f7xx_hal.h"
 #include "stm32f7xx_it.h"
@@ -46,12 +46,13 @@
 #include "stm32746g_discovery_qspi.h"
 #include "stm32746g_discovery_camera.h"
 #include "stm32746g_discovery_eeprom.h"
-   
+#include "stm32746g_discovery_lcd.h"
+
 /* FatFs includes components */
 #include "ff_gen_drv.h"
 #include "usbh_diskio.h"
 #include "sd_diskio.h"
-   
+
 /* GUI includes components */
 #include "gui.h"
 #include "dialog.h"
@@ -60,21 +61,21 @@
  /* Kernel includes components */
 #include "k_module.h"
 #include "k_storage.h"
-#include "k_rtc.h"    
-#include "k_bsp.h"   
+#include "k_rtc.h"
+#include "k_bsp.h"
 
-/* utilities and standard includes components */   
+/* utilities and standard includes components */
 #include "cpu_utils.h"
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-   
+
 /* Exported types ------------------------------------------------------------*/
 /* Exported variables --------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
-/* Exported functions ------------------------------------------------------- */ 
+/* Exported functions ------------------------------------------------------- */
 
 #ifdef __cplusplus
 }
