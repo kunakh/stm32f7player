@@ -141,12 +141,10 @@ extern "C" {
 #define  ENOMEDIUM      123  /* No medium found */
 #define  EMEDIUMTYPE    124  /* Wrong medium type */
 
+#if 0
 #ifndef errno
 extern int errno;
 #endif
-
-/*============================================================================*/
-#if 0
 
 #define DECLSPEC
 #define SDLCALL

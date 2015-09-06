@@ -1,4 +1,4 @@
-/**
+/*
   ******************************************************************************
   * @file    main.h
   * @author  MCD Application Team
@@ -70,12 +70,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "semphr.h"
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported variables --------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
+
+extern void Error_Handler();
+extern int play_init();
+
+#define ASSERT(a) do{\
+  if(!(a)) {\
+    printf("[%s%d] ASSERT FAILED in %s(), %s is 0\n", __FILE__, __LINE__, __FUNCTION__,#a);\
+    Error_Handler();\
+  }\
+} while(0);\
 
 #ifdef __cplusplus
 }

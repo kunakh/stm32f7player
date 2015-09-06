@@ -1173,6 +1173,7 @@
           <state>USE_HAL_DRIVER</state>
           <state>USE_STM32746G_DISCOVERY</state>
           <state>ARM_MATH_CM7</state>
+          <state>DATA_IN_ExtSDRAM</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -1233,7 +1234,7 @@
         <option>
           <name>CCAllowList</name>
           <version>1</version>
-          <state>00000000</state>
+          <state>10011110</state>
         </option>
         <option>
           <name>CCDebugInfo</name>
@@ -1349,7 +1350,7 @@
         </option>
         <option>
           <name>CCOptLevel</name>
-          <state>1</state>
+          <state>3</state>
         </option>
         <option>
           <name>CCOptStrategy</name>
@@ -1358,7 +1359,7 @@
         </option>
         <option>
           <name>CCOptLevelSlave</name>
-          <state>1</state>
+          <state>3</state>
         </option>
         <option>
           <name>CompilerMisraRules98</name>
@@ -1988,6 +1989,9 @@
           <name>$PROJ_DIR$\..\Core\Src\k_bsp.c</name>
         </file>
         <file>
+          <name>$PROJ_DIR$\..\Core\Src\k_memory.c</name>
+        </file>
+        <file>
           <name>$PROJ_DIR$\..\Core\Src\k_menu.c</name>
         </file>
         <file>
@@ -1997,9 +2001,6 @@
           <name>$PROJ_DIR$\..\Core\Src\k_rtc.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\Core\Src\k_sdram.c</name>
-        </file>
-        <file>
           <name>$PROJ_DIR$\..\Core\Src\k_startup.c</name>
         </file>
         <file>
@@ -2007,6 +2008,9 @@
         </file>
         <file>
           <name>$PROJ_DIR$\..\Core\Src\main.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\Core\Src\play.c</name>
         </file>
         <file>
           <name>$PROJ_DIR$\..\Core\Src\stm32f7xx_it.c</name>

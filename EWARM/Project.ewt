@@ -2110,6 +2110,9 @@
           <name>$PROJ_DIR$\..\Core\Src\k_bsp.c</name>
         </file>
         <file>
+          <name>$PROJ_DIR$\..\Core\Src\k_memory.c</name>
+        </file>
+        <file>
           <name>$PROJ_DIR$\..\Core\Src\k_menu.c</name>
         </file>
         <file>
@@ -2119,9 +2122,6 @@
           <name>$PROJ_DIR$\..\Core\Src\k_rtc.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\Core\Src\k_sdram.c</name>
-        </file>
-        <file>
           <name>$PROJ_DIR$\..\Core\Src\k_startup.c</name>
         </file>
         <file>
@@ -2129,6 +2129,9 @@
         </file>
         <file>
           <name>$PROJ_DIR$\..\Core\Src\main.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\Core\Src\play.c</name>
         </file>
         <file>
           <name>$PROJ_DIR$\..\Core\Src\stm32f7xx_it.c</name>

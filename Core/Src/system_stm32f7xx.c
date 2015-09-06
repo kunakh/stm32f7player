@@ -73,27 +73,16 @@
   #define HSI_VALUE    ((uint32_t)16000000) /*!< Value of the Internal oscillator in Hz*/
 #endif /* HSI_VALUE */
 
-/**
-  * @}
-  */
-
-/** @addtogroup STM32F7xx_System_Private_TypesDefinitions
-  * @{
-  */
-
-/**
-  * @}
-  */
-
-/** @addtogroup STM32F7xx_System_Private_Defines
-  * @{
-  */
+extern void __SDRAM_Init();
+extern int __QSPI_Init();
+extern void SystemClock_Config();
+extern void CPU_CACHE_Enable();
 
 /************************* Miscellaneous Configuration ************************/
 /*!< Uncomment the following line if you need to use external SRAM or SDRAM mounted
      on EVAL board as data memory  */
 /* #define DATA_IN_ExtSRAM */
-#define DATA_IN_ExtSDRAM
+/* #define DATA_IN_ExtSDRAM */
 
 #if defined(DATA_IN_ExtSRAM) && defined(DATA_IN_ExtSDRAM)
  #error "Please select DATA_IN_ExtSRAM or DATA_IN_ExtSDRAM "
@@ -141,11 +130,7 @@
   * @{
   */
 #if defined (DATA_IN_ExtSRAM) || defined (DATA_IN_ExtSDRAM)
-  extern void __SDRAM_Init();
   static void SystemInit_ExtMemCtl(void);
-//#include <stdio.h>
-//#pragma location=".qspi"
-//const char TEXT_TMP[]="This text should be present in QSPI flash!!!";
 #endif /* DATA_IN_ExtSRAM || DATA_IN_ExtSDRAM */
 
 /**
@@ -188,19 +173,17 @@ void SystemInit(void)
   /* Disable all interrupts */
   RCC->CIR = 0x00000000;
 
-#if defined (DATA_IN_ExtSRAM) || defined (DATA_IN_ExtSDRAM)
-//  SystemInit_ExtMemCtl();
-//  SystemClock_Config();
-//  CPU_CACHE_Enable();
+  /* Configure external memories */
+  SystemClock_Config();
+  CPU_CACHE_Enable();
   __SDRAM_Init();
-
-  extern QSPI_HandleTypeDef QSPIHandle;
-  memset(&QSPIHandle, 0, sizeof(QSPIHandle));
-  QSPIHandle.Instance = QUADSPI;
   __QSPI_Init();
 
   /* Configure QSPI: LPTR register with the low-power time out value */
   WRITE_REG(QUADSPI->LPTR, 0xFFF);
+
+#if defined (DATA_IN_ExtSRAM) || defined (DATA_IN_ExtSDRAM)
+  SystemInit_ExtMemCtl();
 #endif /* DATA_IN_ExtSRAM || DATA_IN_ExtSDRAM */
 
   /* Configure the Vector Table location add offset address ------------------*/
@@ -306,7 +289,7 @@ void SystemCoreClockUpdate(void)
   */
 void SystemInit_ExtMemCtl(void)
 {
-#if defined (DATA_IN_ExtSDRAM)
+#if 0//defined (DATA_IN_ExtSDRAM)
   register uint32_t tmpreg = 0, timeout = 0xFFFF;
   register uint32_t index;
 
