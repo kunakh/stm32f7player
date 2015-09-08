@@ -63,22 +63,6 @@ void SystemClock_Config(void);
 void CPU_CACHE_Enable(void);
 
 /*============================================================================*/
-
-#if 0
-void show(char *data)
-{
-    DMA2D_Config(LCD_X_SIZE, LCD_X_SIZE, CM_RGB565);
-//    HAL_DMA2D_ConfigLayer(&Dma2dHandle, 1);
-    HAL_DMA2D_Start_IT(&Dma2dHandle, (uint32_t)data, frameBufferAddress,
-                       LCD_X_SIZE, LCD_Y_SIZE);
-
-    // wait till the transfer is done
-    while(DMA2D_completed == 0);  // here the MCU is doing nothing - can do other tasks or go low power
-    DMA2D_completed = 0;
-    BSP_LCD_SetLayerAddress(0, frameBufferAddress);
-}
-#endif // 0
-
 /** @defgroup MAIN_Private_FunctionPrototypes
 * @{
 */
@@ -99,7 +83,7 @@ extern K_ModuleItem_Typedef  vnc_server;
 osTimerId lcd_timer;
 
 //#pragma location=0x20006024
-uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
+//uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
 
 /** @defgroup MAIN_Private_Functions
 * @{
@@ -118,6 +102,9 @@ int main(void)
   /* Enable the CPU Cache */
   CPU_CACHE_Enable();
 
+  /* Configure the system clock */
+  SystemClock_Config();
+
   /* STM32F7xx HAL library initialization:
   - Configure the Flash ART accelerator on ITCM interface
   - Configure the Systick to generate an interrupt each 1 msec
@@ -125,9 +112,6 @@ int main(void)
   - Global MSP (MCU Support Package) initialization
   */
   HAL_Init();
-
-  /* Configure the system clock */
-  SystemClock_Config();
 
   k_BspInit();
 
@@ -284,6 +268,7 @@ void SystemClock_Config(void)
     /* Initialization Error */
     while(1);
   }
+  SystemCoreClockUpdate();
 }
 
 /**
@@ -390,6 +375,16 @@ void vApplicationMallocFailedHook(void)
 {
   printf("MALLOC FAILED");
   Error_Handler();
+}
+
+void *pvPortMalloc(size_t xWantedSize)
+{
+  return malloc(xWantedSize);
+}
+
+void vPortFree(void *pv)
+{
+  free(pv);
 }
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

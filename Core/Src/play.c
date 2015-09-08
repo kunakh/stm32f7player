@@ -45,8 +45,8 @@
 #define LCD_QUEUE_LENGTH    16
 #define LCD_FRAME_DELAY     (1000/60)
 
-#define READER_TASK_STACK     (1024)
-#define READER_TASK_PRIORITY  9
+#define READER_TASK_STACK     (128*1024/4)
+#define READER_TASK_PRIORITY  2
 
 static QueueHandle_t      lcd_queue;
 static TaskHandle_t       lcd_task;
@@ -96,7 +96,7 @@ static char tmp_file_name[128];
 
 size_t read(int fd, void *buf, size_t nbyte)
 {
-//  printf("[%s]\n", __FUNCTION__);
+  printf("[%s]\n", __FUNCTION__);
     size_t size = 0;
     f_read(&tmp_fil, buf, nbyte, &size);
     return size;
@@ -178,11 +178,11 @@ int stat(const char *path, struct stat *buf)
 int fstat(int fd, struct stat *buf)
 {
   printf("[%s]\n", __FUNCTION__);
-//    FILINFO info;
-    int ret = f_stat(tmp_file_name, NULL/*&info*/);
+    FILINFO info;
+    int ret = f_stat(tmp_file_name, &info);
     if(buf) {
-        memset(buf, 0, sizeof(*buf));
-//        buf->st_size = info.fsize;
+//        memset(buf, 0, sizeof(*buf));
+        buf->st_size = info.fsize;
     }
     return ret;
 }
@@ -200,6 +200,7 @@ long lseek(int fd, long offset, int whence)
     offset += tmp_fil.fsize;
   if(f_lseek(&tmp_fil, offset) == FR_OK)
     cur = offset;
+  printf("[%s] cur: %d, size: %d\n", __FUNCTION__, cur, tmp_fil.fsize);
   return cur;
 }
 
@@ -278,7 +279,10 @@ static int mount_sdcard()
 
 static void reader_task_cb(void *arg)
 {
-    const char *filename = "test6.avi";
+//    const char *filename = "test6.avi";
+    char filename[64] = {0};
+    scanf("%s", filename);
+    printf("Playing: %s\n", filename);
 
     AVFormatContext *pFormatCtx = NULL;
     av_log_set_callback(&log_cb);
@@ -354,31 +358,21 @@ static void reader_task_cb(void *arg)
     uint8_t *buffer = NULL;
     int numBytes;
     // Determine required buffer size and allocate buffer
-    numBytes=avpicture_get_size(PIX_FMT_RGB565LE, /*pCodecCtx->*/width,
-                                /*pCodecCtx->*/height);
+    numBytes=avpicture_get_size(PIX_FMT_RGB565LE, width, height);
     buffer = (uint8_t*)av_malloc(numBytes*sizeof(uint8_t));
 
     // Assign appropriate parts of buffer to image planes in pFrameRGB
     // Note that pFrameRGB is an AVFrame, but AVFrame is a superset
     // of AVPicture
-    avpicture_fill((AVPicture *)pFrameRGB, buffer, PIX_FMT_RGB565LE,
-                    /*pCodecCtx->*/width, /*pCodecCtx->*/height);
+    avpicture_fill((AVPicture *)pFrameRGB, buffer, PIX_FMT_RGB565LE, width, height);
 
     struct SwsContext *sws_ctx = NULL;
+    // initialize SWS context for software scaling
+    sws_ctx = sws_getContext(pCodecCtx->width, pCodecCtx->height, pCodecCtx->pix_fmt, width, height,
+                             PIX_FMT_RGB565LE, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+
     int frameFinished;
     AVPacket packet;
-    // initialize SWS context for software scaling
-    sws_ctx = sws_getContext(pCodecCtx->width,
-        pCodecCtx->height,
-        pCodecCtx->pix_fmt,
-        width,
-        height,
-        PIX_FMT_RGB565LE,
-        SWS_FAST_BILINEAR,
-        NULL,
-        NULL,
-        NULL
-        );
 
     while(av_read_frame(pFormatCtx, &packet)>=0) {
       // Is this a packet from the video stream?
@@ -389,17 +383,18 @@ static void reader_task_cb(void *arg)
         // Did we get a video frame?
         if(frameFinished) {
           // Acquire LCD buffer
-          xSemaphoreTake(lcd_sema, portMAX_DELAY);
+//          xSemaphoreTake(lcd_sema, portMAX_DELAY);
           // Switch framebuffer
-          BSP_LCD_SetLayerAddress(0, (uint32_t)lcd_fb_start);
+//          BSP_LCD_SetLayerAddress(0, (uint32_t)lcd_fb_start);
           // Convert the image from its native format to RGB
           sws_scale(sws_ctx, (uint8_t const * const *)pFrame->data, pFrame->linesize, 0,
                     pCodecCtx->height, pFrameRGB->data, pFrameRGB->linesize);
 
           // Send the frame
           BSP_LCD_SetLayerAddress(0, (uint32_t)pFrameRGB->data[0]);
-          HAL_DMA2D_Start_IT(&Dma2dHandle, (uint32_t)pFrameRGB->data[0], (uint32_t)lcd_fb_start,
-                             LCD_X_SIZE, LCD_Y_SIZE);
+//          HAL_DMA2D_Start_IT(&Dma2dHandle, (uint32_t)pFrame/*RGB*/->data[0], (uint32_t)lcd_fb_start,
+//                             LCD_X_SIZE, LCD_Y_SIZE);
+
 //            xQueueSendToBack(lcd_queue, &pFrameRGB->data[0], portMAX_DELAY);
         }
       }
@@ -490,8 +485,9 @@ int play_init(void)
     ASSERT(lcd_fb_start);
 
     BSP_LCD_LayerRgb565Init(0, (uint32_t)lcd_fb_start);
+//    BSP_LCD_LayerRgb888Init(0, (uint32_t)lcd_fb_start);
     BSP_LCD_DisplayOn();
-    DMA2D_Config(LCD_X_SIZE, LCD_X_SIZE, CM_RGB565);
+//    DMA2D_Config(LCD_X_SIZE, LCD_X_SIZE, CM_RGB565);
     BSP_LCD_SetLayerAddress(0, (uint32_t)lcd_fb_start);
 
     // Create LCD task
