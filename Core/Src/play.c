@@ -40,12 +40,12 @@
 #define LCD_Y_SIZE          RK043FN48H_HEIGHT
 #define FRAME_BUFFER_SIZE   (LCD_X_SIZE * LCD_Y_SIZE * 2)
 
-#define LCD_TASK_STACK      256
+#define LCD_TASK_STACK      (256)
 #define LCD_TASK_PRIORITY   10
 #define LCD_QUEUE_LENGTH    16
 #define LCD_FRAME_DELAY     (1000/60)
 
-#define READER_TASK_STACK     (128*1024/4)
+#define READER_TASK_STACK     (200*1024)
 #define READER_TASK_PRIORITY  2
 
 static QueueHandle_t      lcd_queue;
@@ -132,59 +132,52 @@ int open(const char *path, int oflag, ... )
 }
 
 struct stat {
-#if 0
-    dev_t     st_dev;     /* ID of device containing file */
-    ino_t     st_ino;     /* inode number */
-    mode_t    st_mode;    /* protection */
-    nlink_t   st_nlink;   /* number of hard links */
-    uid_t     st_uid;     /* user ID of owner */
-    gid_t     st_gid;     /* group ID of owner */
-    dev_t     st_rdev;    /* device ID (if special file) */
-#else
-    char dummy[7*4];
-#endif
+    uint16_t  st_dev;
+    uint16_t  st_ino;
+    uint32_t  st_mode;
+    uint16_t  st_nlink;
+    uint16_t  st_uid;
+    uint16_t  st_gid;
+    uint16_t  st_rdev;
     size_t    st_size;    /* total size, in bytes */
-    size_t    st_blksize; /* blocksize for file system I/O */
-    size_t    st_blocks;  /* number of 512B blocks allocated */
-    time_t    st_atime;   /* time of last access */
-    time_t    st_mtime;   /* time of last modification */
-    time_t    st_ctime;   /* time of last status change */
+    time_t    st_atime;
+    long      st_spare1;
+    time_t    st_mtime;
+    long      st_spare2;
+    time_t    st_ctime;
+    long      st_spare3;
+    long      st_blksize;
+    long      st_blocks;
+    long      st_spare4[2];
 };
-#if 0
-typedef struct {
-	DWORD	fsize;			/* File size */
-	WORD	fdate;			/* Last modified date */
-	WORD	ftime;			/* Last modified time */
-	BYTE	fattrib;		/* Attribute */
-	TCHAR	fname[13];		/* Short file name (8.3 format) */
-#if _USE_LFN
-	TCHAR*	lfname;			/* Pointer to the LFN buffer */
-	UINT 	lfsize;			/* Size of LFN buffer in TCHAR */
-#endif
-} FILINFO;
-#endif
+
 int stat(const char *path, struct stat *buf)
 {
-    printf("[%s]\n", __FUNCTION__);
-    FILINFO info;
-    int ret = f_stat(path, &info);
+//    printf("[%s]\n", __FUNCTION__);
+//    FILINFO info;
+//    int ret = f_stat(path, &info);
     if(buf) {
         memset(buf, 0, sizeof(*buf));
-        buf->st_size = info.fsize;
+        buf->st_size = tmp_fil.fsize;//info.fsize;
+//        buf->st_mtime = info.ftime;
     }
-    return ret;
+    return 0;
 }
 
 int fstat(int fd, struct stat *buf)
 {
-  printf("[%s]\n", __FUNCTION__);
-    FILINFO info;
-    int ret = f_stat(tmp_file_name, &info);
-    if(buf) {
-//        memset(buf, 0, sizeof(*buf));
-        buf->st_size = info.fsize;
-    }
-    return ret;
+//  printf("[%s]\n", __FUNCTION__);
+//  FILINFO info;
+//  int ret = f_stat(tmp_file_name, &info);
+  if(buf) {
+    memset(buf, 0, sizeof(*buf));
+    buf->st_size = tmp_fil.fsize;//info.fsize;
+//    buf->st_mtime = info.ftime;
+//      buf-> = info.fdate;
+//      buf->st_mode = info.fattrib;
+//      buf-> = info.fname;
+  }
+  return 0;
 }
 
 #define	SEEK_SET	0
@@ -243,7 +236,9 @@ void __assert_func(const char *_file, int _line, const char *_func, const char *
 
 static void log_cb(void* ptr, int level, const char* fmt, va_list vl)
 {
-    vprintf(fmt, vl);
+  if(level > AV_LOG_VERBOSE)
+    return;
+  vprintf(fmt, vl);
 }
 
 static void lcd_task_cb(void *arg)
@@ -280,10 +275,12 @@ static int mount_sdcard()
 static void reader_task_cb(void *arg)
 {
 //    const char *filename = "test6.avi";
+    const char *filename = "H264_test1_480x360.mp4";
+/*
     char filename[64] = {0};
     scanf("%s", filename);
     printf("Playing: %s\n", filename);
-
+*/
     AVFormatContext *pFormatCtx = NULL;
     av_log_set_callback(&log_cb);
     av_register_all();
@@ -302,9 +299,9 @@ static void reader_task_cb(void *arg)
     }
 
 //    if (!av_dict_get(format_opts, "analyzeduration", NULL, AV_DICT_MATCH_CASE))
-//        av_dict_set(&format_opts, "analyzeduration", "10000", AV_DICT_DONT_OVERWRITE);
+//        av_dict_set(&format_opts, "analyzeduration", "1000000", AV_DICT_DONT_OVERWRITE);
 //    if (!av_dict_get(format_opts, "probesize", NULL, AV_DICT_MATCH_CASE))
-//        av_dict_set(&format_opts, "probesize", "10000", AV_DICT_DONT_OVERWRITE);
+//        av_dict_set(&format_opts, "probesize", "1000000", AV_DICT_DONT_OVERWRITE);
 
     if(avformat_open_input(&pFormatCtx, filename, NULL, &format_opts) != 0)
        Error_Handler();
@@ -359,7 +356,7 @@ static void reader_task_cb(void *arg)
     int numBytes;
     // Determine required buffer size and allocate buffer
     numBytes=avpicture_get_size(PIX_FMT_RGB565LE, width, height);
-    buffer = (uint8_t*)av_malloc(numBytes*sizeof(uint8_t));
+    buffer = (uint8_t*)malloc(numBytes*sizeof(uint8_t));
 
     // Assign appropriate parts of buffer to image planes in pFrameRGB
     // Note that pFrameRGB is an AVFrame, but AVFrame is a superset

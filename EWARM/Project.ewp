@@ -2017,6 +2017,9 @@
         </file>
         <file>
           <name>$PROJ_DIR$\..\Core\Src\test.c</name>
+          <excluded>
+            <configuration>ffmpeg</configuration>
+          </excluded>
           <configuration>
             <name>ffmpeg</name>
             <settings>
