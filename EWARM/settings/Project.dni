@@ -12,7 +12,7 @@ ByteLimit=50
 stlinkserialNo=114C5BB8
 stlinkfoundProbes=
 [DebugChecksum]
-Checksum=-2075988828
+Checksum=290122402
 [Exceptions]
 StopOnUncaught=_ 0
 StopOnThrow=_ 0
@@ -42,6 +42,10 @@ ITMlogFile=$PROJ_DIR$\ITM.log
 [RegisterFilter]
 FilePath=_ ""
 UseFilter=_ 0
+[struct_types]
+Fmt0=struct <Unnamed 145>-CLKCR	4	0
+Fmt1=struct <Unnamed 145>-CMD	4	0
+Fmt2=struct <Unnamed 145>-DTIMER	4	0
 [Trace2]
 Enabled=0
 ShowSource=0
@@ -70,9 +74,8 @@ SumSortOrder=0
 [Disassemble mode]
 mode=0
 [Breakpoints2]
-Bp0=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\play.c}.410.5" 0 0 1 "" 0 "" 0
-Bp1=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\play.c}.284.22" 0 0 1 "" 0 "" 0
-Count=2
+Bp0=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\play.c}.295.5" 0 0 1 "" 0 "" 0
+Count=1
 [Log file]
 LoggingEnabled=_ 0
 LogFile=_ ""

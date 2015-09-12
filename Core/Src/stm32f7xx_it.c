@@ -235,14 +235,39 @@ void ETH_IRQHandler(void)
 //  ETHERNET_IRQHandler();
 }
 
-/**
-  * @brief  This function handles DMA2D Handler.
-  * @param  None
-  * @retval None
-  */
 void DMA2D_IRQHandler(void)
 {
   HAL_DMA2D_IRQHandler(&Dma2dHandle);
+}
+
+/**
+  * @brief  This function handles SDIO interrupt request.
+  * @param  None
+  * @retval None
+  */
+void SDMMC1_IRQHandler(void)
+{
+  BSP_SD_IRQHandler();
+}
+
+/**
+  * @brief  This function handles DMA2 Stream 3 interrupt request.
+  * @param  None
+  * @retval None
+  */
+void DMA2_Stream3_IRQHandler(void)
+{
+  BSP_SD_DMA_Rx_IRQHandler();
+}
+
+/**
+  * @brief  This function handles DMA2 Stream 6 interrupt request.
+  * @param  None
+  * @retval None
+  */
+void DMA2_Stream6_IRQHandler(void)
+{
+  BSP_SD_DMA_Tx_IRQHandler();
 }
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

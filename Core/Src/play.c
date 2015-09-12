@@ -38,15 +38,15 @@
 
 #define LCD_X_SIZE          RK043FN48H_WIDTH
 #define LCD_Y_SIZE          RK043FN48H_HEIGHT
-#define FRAME_BUFFER_SIZE   (LCD_X_SIZE * LCD_Y_SIZE * 2)
+#define FRAME_BUFFER_SIZE   (LCD_X_SIZE * LCD_Y_SIZE * 2) // rgb565
 
 #define LCD_TASK_STACK      (256)
 #define LCD_TASK_PRIORITY   10
 #define LCD_QUEUE_LENGTH    16
 #define LCD_FRAME_DELAY     (1000/60)
 
-#define READER_TASK_STACK     (200*1024)
-#define READER_TASK_PRIORITY  2
+#define READER_TASK_STACK     (100*1024)
+#define READER_TASK_PRIORITY  8
 
 static QueueHandle_t      lcd_queue;
 static TaskHandle_t       lcd_task;
@@ -59,6 +59,9 @@ volatile char *lcd_fb_active = NULL;
 
 AVDictionary *format_opts = NULL;
 void *_impure_ptr = NULL;
+
+#define __ALIGN_MASK(x,mask)    (((x)+(mask))&~(mask))
+#define ALIGN(x,a)              __ALIGN_MASK(x,((a)-1))
 
 void Error_Handler(void)
 {
@@ -96,7 +99,7 @@ static char tmp_file_name[128];
 
 size_t read(int fd, void *buf, size_t nbyte)
 {
-  printf("[%s]\n", __FUNCTION__);
+//  printf("[%s]\n", __FUNCTION__);
     size_t size = 0;
     f_read(&tmp_fil, buf, nbyte, &size);
     return size;
@@ -185,7 +188,7 @@ int fstat(int fd, struct stat *buf)
 #define	SEEK_END	2
 long lseek(int fd, long offset, int whence)
 {
-  printf("[%s] whence: %d, offset: %d\n", __FUNCTION__, whence, offset);
+//  printf("[%s] whence: %d, offset: %d\n", __FUNCTION__, whence, offset);
   static int cur = 0;
   if(whence == SEEK_CUR)
     offset += cur;
@@ -271,22 +274,47 @@ static int mount_sdcard()
   return 0;
 }
 
+extern void* __iar_dlmemalign(size_t, size_t);
 
 static void reader_task_cb(void *arg)
 {
+  while(1) {
 //    const char *filename = "test6.avi";
-    const char *filename = "H264_test1_480x360.mp4";
-/*
-    char filename[64] = {0};
-    scanf("%s", filename);
-    printf("Playing: %s\n", filename);
-*/
+//    const char *filename = "H264_test1_480x360.mp4";
+    const char *filename = "test2.mp4";
+//    char filename[64] = {0};
+//    scanf("%s", filename);
+//    printf("Playing: %s\n", filename);
+#if 0
     AVFormatContext *pFormatCtx = NULL;
     av_log_set_callback(&log_cb);
     av_register_all();
+#endif
 
+//    BSP_SD_Init();
     mount_sdcard();
 
+    open(filename, 0);
+    char *buff = __iar_dlmemalign(32768, 256);
+    size_t size = 0, sz;
+
+    uint32_t t0 = xTaskGetTickCount();
+    uint32_t sec0 = t0 >> 10;
+    while((sz = read(0, buff, 32768)) > 0) {
+      size += sz;
+      uint32_t sec = xTaskGetTickCount() >> 10;
+      if(sec0 != sec) {
+        sec0 = sec;
+        uint32_t time = xTaskGetTickCount() - t0;
+        printf("time: %d, %f kB/s\n", time, (float)size/(float)time);
+        printf("cpu usage: %d %\n", osGetCPUUsage());
+        size = 0;
+        t0 = xTaskGetTickCount();
+      }
+    }
+    free(buff);
+
+#if 0
     pFormatCtx = avformat_alloc_context();
     if (!pFormatCtx) {
         av_log(NULL, AV_LOG_FATAL, "Could not allocate context.\n");
@@ -412,13 +440,11 @@ static void reader_task_cb(void *arg)
 
     // Close the video file
     avformat_close_input(&pFormatCtx);
-
-  while(1) {
-    ;
+#endif // 0
   }
 }
 
-
+#if 0
 static void TransferComplete(DMA2D_HandleTypeDef *hdma2d)
 {
   xSemaphoreGiveFromISR(lcd_sema, NULL);
@@ -473,6 +499,7 @@ static void DMA2D_Config(int32_t x_size, int32_t x_size_orig, uint32_t ColorMode
     Error_Handler();
   }
 }
+#endif
 
 int play_init(void)
 {

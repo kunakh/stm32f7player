@@ -2137,6 +2137,9 @@
           <name>$PROJ_DIR$\..\Core\Src\stm32f7xx_it.c</name>
         </file>
         <file>
+          <name>$PROJ_DIR$\..\Core\Src\swscale.c</name>
+        </file>
+        <file>
           <name>$PROJ_DIR$\..\Core\Src\test.c</name>
           <configuration>
             <name>ffmpeg</name>

@@ -100,10 +100,10 @@ int main(void)
   MPU_Config();
 
   /* Enable the CPU Cache */
-  CPU_CACHE_Enable();
+//  CPU_CACHE_Enable();
 
   /* Configure the system clock */
-  SystemClock_Config();
+//  SystemClock_Config();
 
   /* STM32F7xx HAL library initialization:
   - Configure the Flash ART accelerator on ITCM interface
@@ -268,7 +268,7 @@ void SystemClock_Config(void)
     /* Initialization Error */
     while(1);
   }
-  SystemCoreClockUpdate();
+//  SystemCoreClockUpdate();
 }
 
 /**

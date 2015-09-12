@@ -1169,9 +1169,9 @@
         </option>
         <option>
           <name>CCDefines</name>
-          <state>STM32F756xx</state>
+          <state>STM32F746xx</state>
           <state>USE_HAL_DRIVER</state>
-          <state>USE_STM32746G_DISCOVERY</state>
+          <state>USE_STM32746G_DISCO</state>
           <state>ARM_MATH_CM7</state>
           <state>DATA_IN_ExtSDRAM</state>
         </option>
@@ -1234,7 +1234,7 @@
         <option>
           <name>CCAllowList</name>
           <version>1</version>
-          <state>10011110</state>
+          <state>10010100</state>
         </option>
         <option>
           <name>CCDebugInfo</name>
@@ -1350,7 +1350,7 @@
         </option>
         <option>
           <name>CCOptLevel</name>
-          <state>3</state>
+          <state>2</state>
         </option>
         <option>
           <name>CCOptStrategy</name>
@@ -1359,7 +1359,7 @@
         </option>
         <option>
           <name>CCOptLevelSlave</name>
-          <state>3</state>
+          <state>2</state>
         </option>
         <option>
           <name>CompilerMisraRules98</name>
@@ -1993,15 +1993,24 @@
         </file>
         <file>
           <name>$PROJ_DIR$\..\Core\Src\k_menu.c</name>
+          <excluded>
+            <configuration>ffmpeg</configuration>
+          </excluded>
         </file>
         <file>
           <name>$PROJ_DIR$\..\Core\Src\k_module.c</name>
+          <excluded>
+            <configuration>ffmpeg</configuration>
+          </excluded>
         </file>
         <file>
           <name>$PROJ_DIR$\..\Core\Src\k_rtc.c</name>
         </file>
         <file>
           <name>$PROJ_DIR$\..\Core\Src\k_startup.c</name>
+          <excluded>
+            <configuration>ffmpeg</configuration>
+          </excluded>
         </file>
         <file>
           <name>$PROJ_DIR$\..\Core\Src\k_storage.c</name>
@@ -2014,6 +2023,12 @@
         </file>
         <file>
           <name>$PROJ_DIR$\..\Core\Src\stm32f7xx_it.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\Core\Src\swscale.c</name>
+          <excluded>
+            <configuration>ffmpeg</configuration>
+          </excluded>
         </file>
         <file>
           <name>$PROJ_DIR$\..\Core\Src\test.c</name>
