@@ -12,7 +12,7 @@ ByteLimit=50
 stlinkserialNo=114C5BB8
 stlinkfoundProbes=
 [DebugChecksum]
-Checksum=-290218277
+Checksum=-1916852569
 [Exceptions]
 StopOnUncaught=_ 0
 StopOnThrow=_ 0
@@ -70,9 +70,9 @@ SumSortOrder=0
 [Disassemble mode]
 mode=0
 [Breakpoints2]
-Bp0=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\play.c}.534.5" 0 0 1 "" 0 "" 0
-Bp1=_ 0 "EMUL_CODE" "0x9013ADE8" 0 0 1 "" 0 "" 0
-Bp2=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\FatFs\src\drivers\sd_diskio.c}.124.5" 0 0 1 "" 0 "" 0
+Bp0=_ 0 "EMUL_CODE" "0x9013ADE8" 0 0 1 "" 0 "" 0
+Bp1=_ 0 "EMUL_CODE" "0x901377F4" 0 0 1 "" 0 "" 0
+Bp2=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\play.c}.565.5" 0 0 1 "" 0 "" 0
 Count=3
 [Log file]
 LoggingEnabled=_ 0

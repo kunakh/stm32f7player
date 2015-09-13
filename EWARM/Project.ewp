@@ -2026,9 +2026,6 @@
         </file>
         <file>
           <name>$PROJ_DIR$\..\Core\Src\swscale.c</name>
-          <excluded>
-            <configuration>ffmpeg</configuration>
-          </excluded>
         </file>
         <file>
           <name>$PROJ_DIR$\..\Core\Src\test.c</name>

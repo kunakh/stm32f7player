@@ -36,6 +36,8 @@
 #include "cmdutils.h"
 #include <assert.h>
 
+#include "swscale.h"
+
 #define LCD_X_SIZE          RK043FN48H_WIDTH
 #define LCD_Y_SIZE          RK043FN48H_HEIGHT
 #define FRAME_BUFFER_SIZE   (LCD_X_SIZE * LCD_Y_SIZE * 2) // rgb565
@@ -46,7 +48,7 @@
 #define LCD_FRAME_DELAY     (1000/60)
 
 #define READER_TASK_PRIORITY  8
-#define READER_TASK_STACK     (150*1024)
+#define READER_TASK_STACK     (200*1024)
 
 static QueueHandle_t      lcd_queue;
 static TaskHandle_t       lcd_task;
@@ -400,7 +402,7 @@ static void reader_task_cb(void *arg)
     int numBytes;
     // Determine required buffer size and allocate buffer
     numBytes=avpicture_get_size(PIX_FMT_RGB565LE, width, height);
-    buffer = (uint8_t*)malloc(numBytes*sizeof(uint8_t));
+    buffer = (uint8_t*)malloc(numBytes);
 
     // Assign appropriate parts of buffer to image planes in pFrameRGB
     // Note that pFrameRGB is an AVFrame, but AVFrame is a superset
@@ -433,8 +435,37 @@ static void reader_task_cb(void *arg)
           // Switch framebuffer
 //          BSP_LCD_SetLayerAddress(0, (uint32_t)lcd_fb_start);
           // Convert the image from its native format to RGB
-          sws_scale(sws_ctx, (uint8_t const * const *)pFrame->data, pFrame->linesize, 0,
-                    pCodecCtx->height, pFrameRGB->data, pFrameRGB->linesize);
+
+//          sws_scale(sws_ctx, (uint8_t const * const *)pFrame->data, pFrame->linesize, 0,
+//                    pCodecCtx->height, pFrameRGB->data, pFrameRGB->linesize);
+
+          ScaleYCbCrToRGB565(pFrame->data[0], pFrame->data[1], pFrame->data[2],
+                             (uint8_t*)lcd_fb_start,
+                             0, 0,
+                             pCodecCtx->width, pCodecCtx->height,
+                             width, height,
+                             pFrame->linesize[0], pFrame->linesize[1], pFrameRGB->linesize[0],
+                             pCodecCtx->pix_fmt,
+                             FILTER_BILINEAR
+                             );
+          BSP_LCD_SetLayerAddress(0, (uint32_t)lcd_fb_start);
+#if 0
+                        const uint8_t *y_buf,
+                        const uint8_t *u_buf,
+                        const uint8_t *v_buf,
+                        uint8_t *rgb_buf,
+                        int source_x0,
+                        int source_y0,
+                        int source_width,
+                        int source_height,
+                        int width,
+                        int height,
+                        int y_pitch,
+                        int uv_pitch,
+                        int rgb_pitch,
+                        YUVType yuv_type,
+                        ScaleFilter filter
+#endif
 
           // Send the frame
 //          BSP_LCD_SetLayerAddress(0, (uint32_t)pFrameRGB->data[0]);
@@ -532,7 +563,7 @@ int play_init(void)
 {
     // LCD Init
     BSP_LCD_Init();
-#if 0
+#if 1
     lcd_fb_start = malloc(FRAME_BUFFER_SIZE); // Double bufferring
     ASSERT(lcd_fb_start);
 
