@@ -45,8 +45,8 @@
 #define LCD_QUEUE_LENGTH    16
 #define LCD_FRAME_DELAY     (1000/60)
 
-#define READER_TASK_STACK     (100*1024)
 #define READER_TASK_PRIORITY  8
+#define READER_TASK_STACK     (150*1024)
 
 static QueueHandle_t      lcd_queue;
 static TaskHandle_t       lcd_task;
@@ -60,8 +60,12 @@ volatile char *lcd_fb_active = NULL;
 AVDictionary *format_opts = NULL;
 void *_impure_ptr = NULL;
 
-#define __ALIGN_MASK(x,mask)    (((x)+(mask))&~(mask))
-#define ALIGN(x,a)              __ALIGN_MASK(x,((a)-1))
+extern void* __iar_dlmemalign(uint32_t, uint32_t);
+void *memalign(size_t align, size_t size)
+{
+//  printf("[%s] size: %d\n", __FUNCTION__, size);
+  return __iar_dlmemalign(align, size);
+}
 
 void Error_Handler(void)
 {
@@ -92,14 +96,16 @@ int decode_interrupt_cb(void *ctx)
     return 0;
 }
 
-static FATFS SDFatFs;
+#pragma data_alignment=32
+__ALIGN_BEGIN static FATFS SDFatFs __ALIGN_END;
+
 static char SDPath[4];
 static FIL tmp_fil;
 static char tmp_file_name[128];
 
 size_t read(int fd, void *buf, size_t nbyte)
 {
-//  printf("[%s]\n", __FUNCTION__);
+//  printf("[%s] buf: %x, size: %d\n", __FUNCTION__, buf, nbyte);
     size_t size = 0;
     f_read(&tmp_fil, buf, nbyte, &size);
     return size;
@@ -196,7 +202,7 @@ long lseek(int fd, long offset, int whence)
     offset += tmp_fil.fsize;
   if(f_lseek(&tmp_fil, offset) == FR_OK)
     cur = offset;
-  printf("[%s] cur: %d, size: %d\n", __FUNCTION__, cur, tmp_fil.fsize);
+//  printf("[%s] cur: %d, size: %d\n", __FUNCTION__, cur, tmp_fil.fsize);
   return cur;
 }
 
@@ -274,47 +280,55 @@ static int mount_sdcard()
   return 0;
 }
 
-extern void* __iar_dlmemalign(size_t, size_t);
+//#define SDMMC_READ_SPEED
 
 static void reader_task_cb(void *arg)
 {
   while(1) {
-//    const char *filename = "test6.avi";
-//    const char *filename = "H264_test1_480x360.mp4";
-    const char *filename = "test2.mp4";
-//    char filename[64] = {0};
-//    scanf("%s", filename);
-//    printf("Playing: %s\n", filename);
-#if 0
-    AVFormatContext *pFormatCtx = NULL;
-    av_log_set_callback(&log_cb);
-    av_register_all();
-#endif
-
-//    BSP_SD_Init();
+#ifdef SDMMC_READ_SPEED
     mount_sdcard();
+    open("test2.mp4", 0);
 
-    open(filename, 0);
-    char *buff = __iar_dlmemalign(32768, 256);
+    char *buff = memalign(4, 32768);
+    printf("buff: %x\n", buff);
+
     size_t size = 0, sz;
+    uint32_t crc = 0;
 
     uint32_t t0 = xTaskGetTickCount();
     uint32_t sec0 = t0 >> 10;
     while((sz = read(0, buff, 32768)) > 0) {
       size += sz;
+
+      int i;
+      for(i = 0; i < sz; i++)
+        crc += buff[i];
+
       uint32_t sec = xTaskGetTickCount() >> 10;
       if(sec0 != sec) {
         sec0 = sec;
         uint32_t time = xTaskGetTickCount() - t0;
         printf("time: %d, %f kB/s\n", time, (float)size/(float)time);
-        printf("cpu usage: %d %\n", osGetCPUUsage());
+        printf("cpu usage: %d %%\n", osGetCPUUsage());
         size = 0;
         t0 = xTaskGetTickCount();
       }
     }
+    printf("crc: %x\n", crc);
     free(buff);
+#else
+//    const char *filename = "test6.avi";
+//    const char *filename = "H264_test1_480x360.mp4";
+    const char *filename = "MP4_640x360.mp4";
+//    printf("\nEnter filename:\n");
+//    char filename[64] = {0};
+//    scanf("%s", filename);
+//    printf("Playing: %s\n", filename);
 
-#if 0
+    AVFormatContext *pFormatCtx = NULL;
+    av_log_set_callback(&log_cb);
+    av_register_all();
+
     pFormatCtx = avformat_alloc_context();
     if (!pFormatCtx) {
         av_log(NULL, AV_LOG_FATAL, "Could not allocate context.\n");
@@ -330,6 +344,8 @@ static void reader_task_cb(void *arg)
 //        av_dict_set(&format_opts, "analyzeduration", "1000000", AV_DICT_DONT_OVERWRITE);
 //    if (!av_dict_get(format_opts, "probesize", NULL, AV_DICT_MATCH_CASE))
 //        av_dict_set(&format_opts, "probesize", "1000000", AV_DICT_DONT_OVERWRITE);
+
+    mount_sdcard();
 
     if(avformat_open_input(&pFormatCtx, filename, NULL, &format_opts) != 0)
        Error_Handler();
@@ -396,8 +412,13 @@ static void reader_task_cb(void *arg)
     sws_ctx = sws_getContext(pCodecCtx->width, pCodecCtx->height, pCodecCtx->pix_fmt, width, height,
                              PIX_FMT_RGB565LE, SWS_FAST_BILINEAR, NULL, NULL, NULL);
 
+    BSP_LCD_LayerRgb565Init(0, (uint32_t)pFrameRGB->data[0]);
+    BSP_LCD_SetLayerAddress(0, (uint32_t)pFrameRGB->data[0]);
+    BSP_LCD_DisplayOn();
+
     int frameFinished;
     AVPacket packet;
+    uint32_t sec0 = xTaskGetTickCount() >> 10;
 
     while(av_read_frame(pFormatCtx, &packet)>=0) {
       // Is this a packet from the video stream?
@@ -416,11 +437,17 @@ static void reader_task_cb(void *arg)
                     pCodecCtx->height, pFrameRGB->data, pFrameRGB->linesize);
 
           // Send the frame
-          BSP_LCD_SetLayerAddress(0, (uint32_t)pFrameRGB->data[0]);
+//          BSP_LCD_SetLayerAddress(0, (uint32_t)pFrameRGB->data[0]);
 //          HAL_DMA2D_Start_IT(&Dma2dHandle, (uint32_t)pFrame/*RGB*/->data[0], (uint32_t)lcd_fb_start,
 //                             LCD_X_SIZE, LCD_Y_SIZE);
-
 //            xQueueSendToBack(lcd_queue, &pFrameRGB->data[0], portMAX_DELAY);
+
+          uint32_t sec = xTaskGetTickCount() >> 10;
+          if(sec0 != sec) {
+            sec0 = sec;
+            printf("cpu usage: %d %%\n", osGetCPUUsage());
+          }
+
         }
       }
       // Free the packet that was allocated by av_read_frame
@@ -440,7 +467,7 @@ static void reader_task_cb(void *arg)
 
     // Close the video file
     avformat_close_input(&pFormatCtx);
-#endif // 0
+#endif // SDMMC read speed
   }
 }
 
@@ -505,6 +532,7 @@ int play_init(void)
 {
     // LCD Init
     BSP_LCD_Init();
+#if 0
     lcd_fb_start = malloc(FRAME_BUFFER_SIZE); // Double bufferring
     ASSERT(lcd_fb_start);
 
@@ -513,7 +541,7 @@ int play_init(void)
     BSP_LCD_DisplayOn();
 //    DMA2D_Config(LCD_X_SIZE, LCD_X_SIZE, CM_RGB565);
     BSP_LCD_SetLayerAddress(0, (uint32_t)lcd_fb_start);
-
+#endif // 0
     // Create LCD task
     xTaskCreate(lcd_task_cb, "lcd_task", LCD_TASK_STACK, NULL, LCD_TASK_PRIORITY, &lcd_task);
     ASSERT(lcd_task);

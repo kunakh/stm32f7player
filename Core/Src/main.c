@@ -119,22 +119,6 @@ int main(void)
   k_CalendarBkupInit();
 
   play_init();
-//  //===== LCD
-//  lcd_fb_start = (uint32_t)malloc(2 * FRAME_BUFFER_OFFSET);
-//  frameBufferAddress = lcd_fb_start + FRAME_BUFFER_OFFSET;
-//
-//  BSP_LCD_Init();
-//  BSP_LCD_LayerRgb565Init(0, lcd_fb_start);
-////  BSP_LCD_SetFont(&Font12);
-//  BSP_LCD_DisplayOn();
-
-
-//  play("test6.avi");
-
-//  char filename[64] = {0};
-//  scanf("%s", filename);
-//  play(filename);
-
 
 #if 0
   /* Create GUI task */

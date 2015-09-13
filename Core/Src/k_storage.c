@@ -16,8 +16,8 @@
   *
   *        http://www.st.com/software_license_agreement_liberty_v2
   *
-  * Unless required by applicable law or agreed to in writing, software 
-  * distributed under the License is distributed on an "AS IS" BASIS, 
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   * See the License for the specific language governing permissions and
   * limitations under the License.
@@ -74,28 +74,28 @@ static void GetExt(char * pFile, char * pExt);
 
 /**
   * @brief  Storage drives initialization
-  * @param  None 
+  * @param  None
   * @retval None
   */
 void k_StorageInit(void)
 {
   /* Link the USB Host disk I/O driver */
    FATFS_LinkDriver(&USBH_Driver, USBDISK_Drive);
-  
+
   /* Init Host Library */
   USBH_Init(&hUSB_Host, USBH_UserProcess, 0);
-  
+
     /* Create USB background task */
   osThreadDef(STORAGE_Thread, StorageThread, osPriorityLow, 0, 64);
   osThreadCreate (osThread(STORAGE_Thread), NULL);
-  
+
   /* Create Storage Message Queue */
   osMessageQDef(osqueue, 10, uint16_t);
   StorageEvent = osMessageCreate (osMessageQ(osqueue), NULL);
-  
+
   /* Add Supported Class */
   USBH_RegisterClass(&hUSB_Host, USBH_MSC_CLASS);
-  
+
   /* Start Host Process */
   USBH_Start(&hUSB_Host);
 }
@@ -108,11 +108,11 @@ void k_StorageInit(void)
 static void StorageThread(void const * argument)
 {
   osEvent event;
-  
+
   for( ;; )
   {
     event = osMessageGet( StorageEvent, osWaitForever );
-    
+
     if( event.status == osEventMessage )
     {
       switch(event.value.v)
@@ -121,11 +121,11 @@ static void StorageThread(void const * argument)
         f_mount(&USBDISK_FatFs,USBDISK_Drive,  0);
         StorageStatus[USB_DISK_UNIT] = 1;
         break;
-        
+
       case USBDISK_DISCONNECTION_EVENT:
         f_mount(0, USBDISK_Drive, 0);
         StorageStatus[USB_DISK_UNIT] = 0;
-        break;  
+        break;
       }
     }
   }
@@ -137,7 +137,7 @@ static void StorageThread(void const * argument)
   * @retval int
   */
 uint8_t k_StorageGetStatus (uint8_t unit)
-{  
+{
   return StorageStatus[unit];
 }
 
@@ -147,10 +147,10 @@ uint8_t k_StorageGetStatus (uint8_t unit)
   * @retval int
   */
 uint32_t k_StorageGetCapacity (uint8_t unit)
-{  
+{
   uint32_t   tot_sect = 0;
   FATFS *fs;
-  
+
   if(unit == USB_DISK_UNIT)
   {
     fs = &USBDISK_FatFs;
@@ -161,21 +161,21 @@ uint32_t k_StorageGetCapacity (uint8_t unit)
 
 /**
   * @brief  Storage get free space
-  * @param  unit: logical storage unit index. 
+  * @param  unit: logical storage unit index.
   * @retval int
   */
 uint32_t k_StorageGetFree (uint8_t unit)
-{ 
+{
   uint32_t   fre_clust = 0;
   FATFS *fs ;
   FRESULT res = FR_INT_ERR;
-  
+
   if(unit == USB_DISK_UNIT)
   {
     fs = &USBDISK_FatFs;
     res = f_getfree("0:", (DWORD *)&fre_clust, &fs);
   }
-  
+
   if(res == FR_OK)
   {
     return (fre_clust * fs->csize);
@@ -192,16 +192,16 @@ uint32_t k_StorageGetFree (uint8_t unit)
   * @retval None
   */
 static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
-{  
+{
   switch (id)
-  { 
+  {
   case HOST_USER_SELECT_CONFIGURATION:
     break;
-    
+
   case HOST_USER_DISCONNECTION:
     osMessagePut ( StorageEvent, USBDISK_DISCONNECTION_EVENT, 0);
     break;
-    
+
   case HOST_USER_CLASS_ACTIVE:
     osMessagePut ( StorageEvent, USBDISK_CONNECTION_EVENT, 0);
     break;
@@ -214,12 +214,12 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
   * @param  pExt:  pointer to the file extension
   * @retval None
   */
-static void GetExt(char * pFile, char * pExt) 
+static void GetExt(char * pFile, char * pExt)
 {
   int Len;
   int i;
   int j;
-  
+
   /* Search beginning of extension */
   Len = strlen(pFile);
   for (i = Len; i > 0; i--) {
@@ -228,7 +228,7 @@ static void GetExt(char * pFile, char * pExt)
       break;
     }
   }
-  
+
   /* Copy extension */
   j = 0;
   while (*(pFile + ++i) != '\0') {
@@ -244,12 +244,12 @@ static void GetExt(char * pFile, char * pExt)
   * @param  pExt:  pointer to the file extension
   * @retval None
   */
-void k_GetExtOnly(char * pFile, char * pExt) 
+void k_GetExtOnly(char * pFile, char * pExt)
 {
   int Len;
   int i;
   int j;
-  
+
   /* Search beginning of extension */
   Len = strlen(pFile);
   for (i = Len; i > 0; i--) {
@@ -257,7 +257,7 @@ void k_GetExtOnly(char * pFile, char * pExt)
       break;
     }
   }
-  
+
   /* Copy extension */
   j = 0;
   while (*(pFile + ++i) != '\0') {
@@ -275,25 +275,25 @@ int k_GetData(CHOOSEFILE_INFO * pInfo)
 {
   char                c;
   int                 i;
-  char               tmp[CHOOSEFILE_MAXLEN];  
+  char               tmp[CHOOSEFILE_MAXLEN];
   FRESULT res = FR_INT_ERR;
   char *fn;
   FILINFO fno;
 #if _USE_LFN
   fno.lfname = lfn;
   fno.lfsize = sizeof(lfn);
-#endif   
-  
-  switch (pInfo->Cmd) 
+#endif
+
+  switch (pInfo->Cmd)
   {
   case CHOOSEFILE_FINDFIRST:
-    f_closedir(&dir); 
-    
+    f_closedir(&dir);
+
     /* reformat path */
     memset(tmp, 0, CHOOSEFILE_MAXLEN);
     strcpy(tmp, pInfo->pRoot);
-    
-    for(i= CHOOSEFILE_MAXLEN; i > 0 ; i--)
+
+    for(i= CHOOSEFILE_MAXLEN - 1; i > 0 ; i--)
     {
       if(tmp[i] == '/')
       {
@@ -301,21 +301,21 @@ int k_GetData(CHOOSEFILE_INFO * pInfo)
         break;
       }
     }
-    
+
     res = f_opendir(&dir, tmp);
-    
+
     if (res == FR_OK)
     {
-      
+
       res = f_readdir(&dir, &fno);
     }
     break;
-    
+
   case CHOOSEFILE_FINDNEXT:
     res = f_readdir(&dir, &fno);
     break;
   }
-  
+
   if (res == FR_OK)
   {
 #if _USE_LFN
@@ -327,11 +327,11 @@ int k_GetData(CHOOSEFILE_INFO * pInfo)
 #else
     fn = fno.fname;
 #endif
-    
-    
+
+
     while (((fno.fattrib & AM_DIR) == 0) && (res == FR_OK))
     {
-      
+
       if((strstr(pInfo->pMask, ".img")))
       {
         if((strstr(fn, ".bmp")) || (strstr(fn, ".jpg")) || (strstr(fn, ".BMP")) || (strstr(fn, ".JPG")))
@@ -341,10 +341,10 @@ int k_GetData(CHOOSEFILE_INFO * pInfo)
         else
         {
           res = f_readdir(&dir, &fno);
-          
+
           if (res != FR_OK || fno.fname[0] == 0)
           {
-            f_closedir(&dir); 
+            f_closedir(&dir);
             return 1;
           }
           else
@@ -360,7 +360,7 @@ int k_GetData(CHOOSEFILE_INFO * pInfo)
 #endif
           }
         }
-        
+
       }
       else if((strstr(pInfo->pMask, ".audio")))
       {
@@ -371,10 +371,10 @@ int k_GetData(CHOOSEFILE_INFO * pInfo)
         else
         {
           res = f_readdir(&dir, &fno);
-          
+
           if (res != FR_OK || fno.fname[0] == 0)
           {
-            f_closedir(&dir); 
+            f_closedir(&dir);
             return 1;
           }
           else
@@ -390,9 +390,9 @@ int k_GetData(CHOOSEFILE_INFO * pInfo)
 #endif
           }
         }
-        
+
       }
-      
+
       else if((strstr(pInfo->pMask, ".video")))
       {
         if((strstr(fn, ".emf")) || (strstr(fn, ".EMF")))
@@ -402,10 +402,10 @@ int k_GetData(CHOOSEFILE_INFO * pInfo)
         else
         {
           res = f_readdir(&dir, &fno);
-          
+
           if (res != FR_OK || fno.fname[0] == 0)
           {
-            f_closedir(&dir); 
+            f_closedir(&dir);
             return 1;
           }
           else
@@ -421,16 +421,16 @@ int k_GetData(CHOOSEFILE_INFO * pInfo)
 #endif
           }
         }
-        
-      }      
+
+      }
       else if(strstr(fn, pInfo->pMask) == NULL)
       {
-        
+
         res = f_readdir(&dir, &fno);
-        
+
         if (res != FR_OK || fno.fname[0] == 0)
         {
-          f_closedir(&dir); 
+          f_closedir(&dir);
           return 1;
         }
         else
@@ -443,23 +443,23 @@ int k_GetData(CHOOSEFILE_INFO * pInfo)
           fn = fno.lfname;
 #else
           fn = fno.fname;
-#endif 
+#endif
         }
       }
       else
       {
         break;
       }
-    }   
-    
+    }
+
     if(fn[0] == 0)
     {
-      f_closedir(&dir); 
+      f_closedir(&dir);
       return 1;
-    } 
-    
+    }
+
     pInfo->Flags = ((fno.fattrib & AM_DIR) == AM_DIR) ? CHOOSEFILE_FLAG_DIRECTORY : 0;
-    
+
     for (i = 0; i < GUI_COUNTOF(_aAttrib); i++)
     {
       if (fno.fattrib & _aAttrib[i].Mask)
@@ -485,7 +485,7 @@ int k_GetData(CHOOSEFILE_INFO * pInfo)
     pInfo->pExt = acExt;
     pInfo->SizeL = fno.fsize;
     pInfo->SizeH = 0;
-    
+
   }
   return res;
 }

@@ -176,9 +176,9 @@ void SystemInit(void)
   /* Configure external memories */
   SystemClock_Config();
   CPU_CACHE_Enable();
+
   __SDRAM_Init();
   __QSPI_Init();
-
   /* Configure QSPI: LPTR register with the low-power time out value */
   WRITE_REG(QUADSPI->LPTR, 0xFFF);
 
