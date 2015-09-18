@@ -1,11 +1,12 @@
 #include <stdint.h>
 #include <limits.h>
-#include "main.h"
+//#include "main.h"
 #include "swscale.h"
 
 #define clamped(x, low, high)  (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
+#define ASSERT(a)
 #define NS_ASSERTION(a, b)  ASSERT((a))
-
+#define RAND_MAX 100
 
 /*This contains all of the parameters that are needed to convert a row.
   Passing them in a struct instead of as individual parameters saves the need
@@ -92,18 +93,27 @@ static int bislerp(const uint8_t *row,
   return ((a<<8)+(b-a)*xweight+128)>>8;
 }
 
+const short DITHER_BIAS[4][3]={
+    {-14240,    8704,    -17696},
+    {-14240+128,8704+64, -17696+128},
+    {-14240+256,8704+128,-17696+256},
+    {-14240+384,8704+192,-17696+384}
+};
+
 /*Convert a single pixel from Y'CbCr to RGB565.
   This uses the exact same formulas as the asm, even though we could make the
    constants a lot more accurate with 32-bit wide registers.*/
 static uint16_t yu2rgb565(int y, int u, int v, int dither) {
   /*This combines the constant offset that needs to be added during the Y'CbCr
      conversion with a rounding offset that depends on the dither parameter.*/
+#if 0
   static const int DITHER_BIAS[4][3]={
     {-14240,    8704,    -17696},
     {-14240+128,8704+64, -17696+128},
     {-14240+256,8704+128,-17696+256},
     {-14240+384,8704+192,-17696+384}
   };
+#endif
   int r;
   int g;
   int b;
@@ -524,136 +534,148 @@ void ScaleYCbCrToRGB565(const uint8_t *y_buf,
       ctx.v_row = v_buf + source_y*uv_pitch;
       ctx.y_yweight = yweight;
       ctx.uv_yweight = uvweight;
-      (*scale_row)(&ctx, dither);
+//      (*scale_row)(&ctx, dither);
+/*
+Input args:
+%[x0]  = rgb_row
+%[x1]  = source_x_q16
+%[x2]  = pitch
+%[x3]  = yweight
+%[x4]  = source_uv_xoffs_q16
+%[x5]  = source_dx_q16
+%[x6]  = width
+%[x7]  = y_row
+%[x8]  = u_row
+%[x9]  = v_row
+%[x10] = DITHER_BIAS[dither][0]
+%[x11] = DITHER_BIAS[dither][1]
+%[x12] = DITHER_BIAS[dither][2]
+%[x13] = DITHER_BIAS[dither^3][0]
+%[x14] = DITHER_BIAS[dither^3][1]
+%[x15] = DITHER_BIAS[dither^3][2]
+tmp: r7, r8, r9, r10, r11, r12, r14
+*/
+asm volatile (
+"ScaleYCbCr42xToRGB565_BilinearY_Row:                                                             \n"
+"scale_loop:                                                                                      \n"
+"@ even pixel                                                                                     \n"
+"LDR     r8, %[x7]                                                                            \n"
+"ADD     r7, r8, %[x1], LSR #16     @ &ctx->y_row[source_x]                                          \n"
+"LDRH    r8, [r7]                @ 0:0:b:a                                                        \n"
+"LDRH    r9, [r7, %[x2]]            @ 0:0:d:c                                                        \n"
+"QSUB8   r9, r9, r8              @ 0:0:d-b:c-a                                                    \n"
+"UXTH    r10, r8, ROR #24         @ 0:0:a:0                                                       \n"
+"AND     r8, r8, #0xFF00         @ 0:0:b:0                                                        \n"
+"UXTB    r11, r9                 @ 0:0:0:c-a                                                      \n"
+"LSR     r9, r9, #8              @ 0:0:0:d-b                                                      \n"
+"SMLABB  r10, r11, %[x3], r10                                                                        \n"
+"ADD     r10, r10, #128            @ (a<<8)+(c-a)*yweight+128                                     \n"
+"SMLABB  r8, r9, %[x3], r8                                                                           \n"
+"ADD     r8, r8, #128            @ (b<<8)+(d-b)*yweight+128                                       \n"
+"QSUB    r8, r8, r10                                                                               \n"
+"LSR     r8, r8, #8              @ (b-a)                                                          \n"
+"ADD     r7, %[x1], #128            @ source_x_q16 + 128                                             \n"
+"UBFX    r7, r7, #8, #8          @ xweight = ((source_x_q16&0xFFFF)+128)>>8@                      \n"
+"SMLABB  r8, r8, r7, r10                                                                           \n"
+"LSR     r8, r8, #8              @ y=((a<<8)+(b-a)*xweight+128)>>8                                \n"
+"                                @ r8 = y, r9 = u, r10 = v, r11 = bias                             \n"
+"ADD     r7, %[x1], %[x4]                                                                               \n"
+"LSR     r7, r7, #17             @ source_x = (source_x_q16+ctx->source_uv_xoffs_q16)>>17@        \n"
+"ADD     %[x1], %[x5]                  @ source_x_q16 += ctx->source_dx_q16@                            \n"
+"LDR     r9, %[x8]                                                                            \n"
+"LDRB    r9, [r9, r7]            @ u = ctx->u_row[source_x]@                                      \n"
+"LDR     r10, %[x9]                                                                            \n"
+"LDRB    r10, [r10, r7]            @ v = ctx->v_row[source_x]@                                      \n"
+"MOVW     r11, %[x10]                @ DITHER_BIAS[dither][0]                                         \n"
+"MOV32   r12, (102 << 16 | 74)   @ 0:102:0:74                                                     \n"
+"PKHBT   r14, r8, r10, LSL #16    @ 0:v:0:y                                                        \n"
+"SMLAD   r11, r12, r14, r11      @ 74*y+102*v+DITHER_BIAS[dither][0]                              \n"
+"USAT    r7, #5, r11, ASR #9     @ r =clamped((74*y+102*v+DITHER_BIAS[dither][0])>>9, 0, 31)@     \n"
+"LSL     r7, r7, #11             @ (r<<11)                                                        \n"
+"MOVW     r11, %[x11]                @ DITHER_BIAS[dither][1]                                         \n"
+"MOVT    r12, 0xFFCC               @ 0:-52:0:74                                                     \n"
+"SMLAD   r11, r12, r14, r11      @ 74*y-52*v+DITHER_BIAS[dither][1]                               \n"
+"MOV     r10, #-25                                                                                 \n"
+"SMLABB  r11, r10, r9, r11        @ 74*y-25*u-52*v+DITHER_BIAS[dither][1]                          \n"
+"USAT    r11, #6, r11, ASR #8    @ g = clamped((74*y-25*u-52*v+DITHER_BIAS[dither][1])>>8, 0, 63)@\n"
+"ORR     r7, r7, r11, LSL #5     @ (r<<11 | g<<5)                                                 \n"
+"MOVW     r11, %[x12]                @ DITHER_BIAS[dither][2]                                         \n"
+"MOVT    r12, #129               @ 0:129:0:74                                                     \n"
+"PKHBT   r14, r8, r9, LSL #16    @ 0:u:0:y                                                        \n"
+"SMLAD   r11, r12, r14, r11      @ 74*y+129*u+DITHER_BIAS[dither][2]                              \n"
+"USAT    r11, #5, r11, ASR #9    @ b = clamped((74*y+129*u+DITHER_BIAS[dither][2])>>9, 0, 31)@    \n"
+"ORR     r7, r7, r11             @ (r<<11 | g<<5 | b)@                                            \n"
+"STRH.W  r7, [%[x0]], #2            @ ctx->rgb_row[x] = yu2rgb565(y, u, v, dither)@                  \n"
+"@ odd pixel                                                                                      \n"
+"LDR     r8, %[x7]                                                                            \n"
+"ADD     r7, r8, %[x1], LSR #16     @ &ctx->y_row[source_x]                                          \n"
+"LDRH    r8, [r7]                @ 0:0:b:a                                                        \n"
+"LDRH    r9, [r7, %[x2]]            @ 0:0:d:c                                                        \n"
+"QSUB8   r9, r9, r8              @ 0:0:d-b:c-a                                                    \n"
+"UXTH    r10, r8, ROR #24         @ 0:0:a:0                                                        \n"
+"AND     r8, r8, #0xFF00         @ 0:0:b:0                                                        \n"
+"UXTB    r11, r9                 @ 0:0:0:c-a                                                      \n"
+"LSR     r9, r9, #8              @ 0:0:0:d-b                                                      \n"
+"SMLABB  r10, r11, %[x3], r10                                                                          \n"
+"ADD     r10, r10, #128            @ (a<<8)+(c-a)*yweight+128                                       \n"
+"SMLABB  r8, r9, %[x3], r8                                                                           \n"
+"ADD     r8, r8, #128            @ (b<<8)+(d-b)*yweight+128                                       \n"
+"QSUB    r8, r8, r10                                                                               \n"
+"LSR     r8, r8, #8              @ (b-a)                                                          \n"
+"ADD     r7, %[x1], #128            @ source_x_q16 + 128                                             \n"
+"UBFX    r7, r7, #8, #8          @ xweight = ((source_x_q16&0xFFFF)+128)>>8@                      \n"
+"SMLABB  r8, r8, r7, r10                                                                           \n"
+"LSR     r8, r8, #8              @ y=((a<<8)+(b-a)*xweight+128)>>8                                \n"
+"                                @ r8 = y, r9 = u, r10 = v, r11 = bias                             \n"
+"ADD     r7, %[x1], %[x4]                                                                               \n"
+"LSR     r7, r7, #17             @ source_x = (source_x_q16+ctx->source_uv_xoffs_q16)>>17@        \n"
+"ADD     %[x1], %[x5]                  @ source_x_q16 += ctx->source_dx_q16@                            \n"
+"LDR     r9, %[x8]                                                                            \n"
+"LDRB    r9, [r9, r7]            @ u = ctx->u_row[source_x]@                                      \n"
+"LDR     r10, %[x9]                                                                            \n"
+"LDRB    r10, [r10, r7]            @ v = ctx->v_row[source_x]@                                      \n"
+"MOVW     r11, %[x13]                @ DITHER_BIAS[dither][0]                                         \n"
+"MOV32   r12, (102 << 16 | 74)   @ 0:102:0:74                                                     \n"
+"PKHBT   r14, r8, r10, LSL #16    @ 0:v:0:y                                                        \n"
+"SMLAD   r11, r12, r14, r11      @ 74*y+102*v+DITHER_BIAS[dither][0]                              \n"
+"USAT    r7, #5, r11, ASR #9     @ r =clamped((74*y+102*v+DITHER_BIAS[dither][0])>>9, 0, 31)@     \n"
+"LSL     r7, r7, #11             @ (r<<11)                                                        \n"
+"MOVW     r11, %[x14]                @ DITHER_BIAS[dither][1]                                         \n"
+"MOVT    r12, #-52               @ 0:-52:0:74                                                     \n"
+"SMLAD   r11, r12, r14, r11      @ 74*y-52*v+DITHER_BIAS[dither][1]                               \n"
+"MOV     r10, #-25                                                                                 \n"
+"SMLABB  r11, r10, r9, r11        @ 74*y-25*u-52*v+DITHER_BIAS[dither][1]                          \n"
+"USAT    r11, #6, r11, ASR #8    @ g = clamped((74*y-25*u-52*v+DITHER_BIAS[dither][1])>>8, 0, 63)@\n"
+"ORR     r7, r7, r11, LSL #5     @ (r<<11 | g<<5)                                                 \n"
+"MOVW     r11, %[x15]                @ DITHER_BIAS[dither][2]                                         \n"
+"MOVT    r12, #129               @ 0:129:0:74                                                     \n"
+"PKHBT   r14, r8, r9, LSL #16    @ 0:u:0:y                                                        \n"
+"SMLAD   r11, r12, r14, r11      @ 74*y+129*u+DITHER_BIAS[dither][2]                              \n"
+"USAT    r11, #5, r11, ASR #9    @ b = clamped((74*y+129*u+DITHER_BIAS[dither][2])>>9, 0, 31)@    \n"
+"ORR     r7, r7, r11             @ (r<<11 | g<<5 | b)@                                            \n"
+"STRH.W  r7, [%[x0]], #2            @ ctx->rgb_row[x] = yu2rgb565(y, u, v, dither)@                  \n"
+"SUBS    %[x6], %[x6], #2            @ width-=2                                                       \n"
+"BNE     scale_loop                                                                               \n"
+::
+    [x0]"r"(ctx.rgb_row),
+    [x1]"r"(source_x0_q16),
+    [x2]"r"(y_pitch),
+    [x3]"r"(yweight),
+    [x4]"r"(source_uv_xoffs_q16),
+    [x5]"r"(source_dx_q16),
+    [x6]"r"(width),
+    [x7]"rm"(ctx.y_row),
+    [x8]"rm"(ctx.u_row),
+    [x9]"rm"(ctx.v_row),
+    [x10]"i"(DITHER_BIAS[0][0]&0xFFFF),
+    [x11]"i"(DITHER_BIAS[0][1]&0xFFFF),
+    [x12]"i"(DITHER_BIAS[0][2]&0xFFFF),
+    [x13]"i"(DITHER_BIAS[3][0]&0xFFFF),
+    [x14]"i"(DITHER_BIAS[3][1]&0xFFFF),
+    [x15]"i"(DITHER_BIAS[3][2]&0xFFFF)
+:   "cc", "memory", "r7", "r8", "r9", "r10", "r11", "r12", "r14");
+
       dither ^= 2;
     }
   }
-}
-
-int IsScaleYCbCrToRGB565Fast(int source_x0,
-                             int source_y0,
-                             int source_width,
-                             int source_height,
-                             int width,
-                             int height,
-                             YUVType yuv_type,
-                             ScaleFilter filter)
-{
-  // Very fast.
-  if (width <= 0 || height <= 0)
-    return 1;
-#  if defined(MOZILLA_MAY_SUPPORT_NEON)
-  if (filter != FILTER_NONE) {
-    int source_dx_q16;
-    int source_dy_q16;
-    int uvxscale_min;
-    int uvxscale_max;
-    int uvyscale_min;
-    int uvyscale_max;
-    source_dx_q16 = (source_width<<16) / width;
-    source_dy_q16 = (source_height<<16) / height;
-    uvxscale_min = yuv_type != YV24 ?
-     CHROMA_NEAREST_SUBSAMP_STEP_MIN : CHROMA_NEAREST_NORMAL_STEP_MIN;
-    uvxscale_max = yuv_type != YV24 ?
-     CHROMA_NEAREST_SUBSAMP_STEP_MAX : CHROMA_NEAREST_NORMAL_STEP_MAX;
-    uvyscale_min = yuv_type == YV12 ?
-     CHROMA_NEAREST_SUBSAMP_STEP_MIN : CHROMA_NEAREST_NORMAL_STEP_MIN;
-    uvyscale_max = yuv_type == YV12 ?
-     CHROMA_NEAREST_SUBSAMP_STEP_MAX : CHROMA_NEAREST_NORMAL_STEP_MAX;
-    if (uvxscale_min <= abs(source_dx_q16)
-     && abs(source_dx_q16) <= uvxscale_max
-     && uvyscale_min <= abs(source_dy_q16)
-     && abs(source_dy_q16) <= uvyscale_max) {
-      if (yuv_type != YV24)
-        return supports_neon();
-    }
-  }
-#  endif
-  return 0;
-}
-
-
-
-void yuv_to_rgb565_row_c(uint16_t *dst,
-                         const uint8_t *y,
-                         const uint8_t *u,
-                         const uint8_t *v,
-                         int x_shift,
-                         int pic_x,
-                         int pic_width)
-{
-  int x;
-  for (x = 0; x < pic_width; x++)
-  {
-    dst[x] = yu2rgb565(y[pic_x+x],
-                       u[(pic_x+x)>>x_shift],
-                       v[(pic_x+x)>>x_shift],
-                       2); // Disable dithering for now.
-  }
-}
-
-void ConvertYCbCrToRGB565(const uint8_t* y_buf,
-                          const uint8_t* u_buf,
-                          const uint8_t* v_buf,
-                          uint8_t* rgb_buf,
-                          int pic_x,
-                          int pic_y,
-                          int pic_width,
-                          int pic_height,
-                          int y_pitch,
-                          int uv_pitch,
-                          int rgb_pitch,
-                          YUVType yuv_type)
-{
-  int x_shift;
-  int y_shift;
-  x_shift = yuv_type != YV24;
-  y_shift = yuv_type == YV12;
-//TODO: fix NEON asm for iOS
-#  if defined(MOZILLA_MAY_SUPPORT_NEON) && !defined(__APPLE__)
-  if (yuv_type != YV24 && supports_neon())
-  {
-    for (int i = 0; i < pic_height; i++) {
-      int yoffs;
-      int uvoffs;
-      yoffs = y_pitch * (pic_y+i) + pic_x;
-      uvoffs = uv_pitch * ((pic_y+i)>>y_shift) + (pic_x>>x_shift);
-      yuv42x_to_rgb565_row_neon((uint16_t*)(rgb_buf + rgb_pitch * i),
-                                y_buf + yoffs,
-                                u_buf + uvoffs,
-                                v_buf + uvoffs,
-                                pic_width,
-                                pic_x&x_shift);
-    }
-  }
-  else
-#  endif
-  {
-    for (int i = 0; i < pic_height; i++) {
-      int yoffs;
-      int uvoffs;
-      yoffs = y_pitch * (pic_y+i);
-      uvoffs = uv_pitch * ((pic_y+i)>>y_shift);
-      yuv_to_rgb565_row_c((uint16_t*)(rgb_buf + rgb_pitch * i),
-                          y_buf + yoffs,
-                          u_buf + uvoffs,
-                          v_buf + uvoffs,
-                          x_shift,
-                          pic_x,
-                          pic_width);
-    }
-  }
-}
-
-int IsConvertYCbCrToRGB565Fast(int pic_x,
-                               int pic_y,
-                               int pic_width,
-                               int pic_height,
-                               YUVType yuv_type)
-{
-#  if defined(MOZILLA_MAY_SUPPORT_NEON)
-  return (yuv_type != YV24 && supports_neon());
-#  else
-  return 0;
-#  endif
 }

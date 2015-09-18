@@ -2138,6 +2138,9 @@
         </file>
         <file>
           <name>$PROJ_DIR$\..\Core\Src\swscale.c</name>
+          <configuration>
+            <name>ffmpeg</name>
+          </configuration>
         </file>
         <file>
           <name>$PROJ_DIR$\..\Core\Src\test.c</name>
