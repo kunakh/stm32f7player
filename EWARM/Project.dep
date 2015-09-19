@@ -2,7 +2,7 @@
 
 <project>
   <fileVersion>2</fileVersion>
-  <fileChecksum>3272362065</fileChecksum>
+  <fileChecksum>3447141018</fileChecksum>
   <configuration>
     <name>STM32F7-DISCO</name>
     <outputs>
@@ -5825,6 +5825,9 @@
       <file>$PROJ_DIR$\..\Core\Src\scale_yuv_row.s</file>
       <file>$PROJ_DIR$\ffmpeg\List\swscale.lst</file>
       <file>$PROJ_DIR$\..\Lib\swscale.o</file>
+      <file>$PROJ_DIR$\ffmpeg\Obj\scale.o</file>
+      <file>$PROJ_DIR$\ffmpeg\Obj\scale.pbi</file>
+      <file>$PROJ_DIR$\..\Core\Src\scale.c</file>
       <file>$PROJ_DIR$\ffmpeg\Exe\project.asm</file>
     </outputs>
     <file>
@@ -6084,7 +6087,7 @@
         </tool>
         <tool>
           <name>BICOMP</name>
-          <file> 142 38 782 884 105 175 88 200 777 36 53 767 756 710 744 122 39 131 101 145 69 55 90 788 883 761 774 784 759 748 34 35 116 107 124 114 115 13 24 121 165 183 182 83 118 79 10 72 5 63 47 44 791 697 768 755 89 747 775 882 763 776 769 745 762 59 154 132 144 119 109 91 472 138 22 133 27 129 51 103 179 41 7 157 60 37 54 9 750 700 881 766 790 772 752 783 696 781 780 760 703 473 128 127 126 894 49 140 33 56 137 147 17 32 148 31 57 30 150 29 50 28 149 26 48 25 153 98 45 97 43 96 136 92 120 130 102 84 141 40 42 85 143 464 178 86 180 177 176 64 46 184 135 185 16 8 11 68 70 71 73 74 785 719 773 753 740 741 749 723 704 754 87 81 100 99 23 12 14 152 77 104 191 193 192 893 117 21 146 20 19 82 15 78 80 18 134 199 95 113 58 112 94 151 61 111 93 110 52 108 139 106 62 181 746 789 706 708 712 751 758</file>
+          <file> 894 30 38 782 884 92 105 175 88 200 777 17 25 36 53 767 756 710 744 129 33 32 28 97 89 91 131 101 39 145 69 55 90 788 883 761 774 784 759 748 127 37 137 31 29 26 98 96 120 115 13 24 121 165 183 182 83 118 79 10 72 5 63 47 44 791 697 768 755 747 775 882 763 776 769 745 762 133 128 126 49 140 56 147 148 57 150 50 149 48 153 45 43 136 51 22 27 59 103 179 41 7 157 60 54 144 9 109 750 700 107 881 766 790 772 752 783 696 781 780 760 703 473 34 154 35 132 122 116 119 142 124 114 472 138 130 102 84 141 40 42 85 143 464 178 86 180 177 176 64 46 184 135 185 16 8 11 68 70 71 73 74 785 719 773 753 740 741 749 723 704 754 87 81 100 99 23 12 14 152 77 104 191 193 192 893 117 21 146 20 19 82 15 78 80 18 134 199 95 113 58 112 94 151 61 111 93 110 52 108 139 106 62 181 746 789 706 708 712 751 758</file>
         </tool>
       </inputs>
     </file>
@@ -9777,6 +9780,25 @@
         </tool>
       </outputs>
     </file>
+    <file>
+      <name>$PROJ_DIR$\..\Core\Src\scale.c</name>
+      <outputs>
+        <tool>
+          <name>ICCARM</name>
+          <file> 900</file>
+        </tool>
+        <tool>
+          <name>BICOMP</name>
+          <file> 901</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 87 38 883 13 44 88 109 700 105 103 102 101</file>
+        </tool>
+      </inputs>
+    </file>
     <forcedrebuild>
       <name>$PROJ_DIR$\..\Core\Src\k_menu.c</name>
       <tool>ICCARM</tool>
@@ -9999,6 +10021,10 @@
     </forcedrebuild>
     <forcedrebuild>
       <name>$PROJ_DIR$\..\..\..\..\Middlewares\ST\STemWin\OS\GUI_X_OS.c</name>
+      <tool>ICCARM</tool>
+    </forcedrebuild>
+    <forcedrebuild>
+      <name>$PROJ_DIR$\..\Core\Src\scale.c</name>
       <tool>ICCARM</tool>
     </forcedrebuild>
     <forcedrebuild>

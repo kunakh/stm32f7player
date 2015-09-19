@@ -42,22 +42,29 @@
 #define LCD_Y_SIZE          RK043FN48H_HEIGHT
 #define FRAME_BUFFER_SIZE   (LCD_X_SIZE * LCD_Y_SIZE * 2) // rgb565
 
-#define LCD_TASK_STACK      (256)
-#define LCD_TASK_PRIORITY   10
-#define LCD_QUEUE_LENGTH    16
-#define LCD_FRAME_DELAY     (1000/60)
+#define VIDEO_TASK_STACK      (250*1024)
+#define VIDEO_TASK_PRIORITY   7
+#define VIDEO_QUEUE_LENGTH    16
+//#define LCD_FRAME_DELAY     (1000/60)
 
-#define READER_TASK_PRIORITY  8
-#define READER_TASK_STACK     (200*1024)
+#define READER_TASK_PRIORITY  5
+#define READER_TASK_STACK     (250*1024)
 
-static QueueHandle_t      lcd_queue;
-static TaskHandle_t       lcd_task;
+typedef struct {
+    AVFrame *pFrame;
+    AVCodecContext *pCodecCtx;
+    AVPacket *packet;
+} video_queue_t;
+
+static QueueHandle_t      video_queue;
+static TaskHandle_t       video_task;
 static TaskHandle_t       reader_task;
 static SemaphoreHandle_t  lcd_sema;
 
 DMA2D_HandleTypeDef Dma2dHandle;
 volatile char *lcd_fb_start = NULL;
 volatile char *lcd_fb_active = NULL;
+static int fps = 0;
 
 AVDictionary *format_opts = NULL;
 void *_impure_ptr = NULL;
@@ -252,27 +259,46 @@ static void log_cb(void* ptr, int level, const char* fmt, va_list vl)
   vprintf(fmt, vl);
 }
 
-static void lcd_task_cb(void *arg)
+static void video_task_cb(void *arg)
 {
-  char *data;//, *data_prev = NULL;
-  while(1) {
-    xQueueReceive(lcd_queue, &data, portMAX_DELAY);
-    BSP_LCD_SetLayerAddress(0, (uint32_t)data);
-//    if(data_prev)
-//      free(data_prev);
-//    data_prev = data;
+  video_queue_t *p;
+  int frameFinished;
 
-//    if(!data) {
-//      // DMA2D completed
-//      BSP_LCD_SetLayerAddress(0, frameBufferAddress);
-//      continue;
-//    }
-//    HAL_DMA2D_Start_IT(&Dma2dHandle, (uint32_t)data, frameBufferAddress,
-//                       LCD_X_SIZE, LCD_Y_SIZE);
-    vTaskDelay(LCD_FRAME_DELAY);
+  while(1) {
+    xQueueReceive(video_queue, &p, portMAX_DELAY);
+    // Decode video frame
+    avcodec_decode_video2(p->pCodecCtx, p->pFrame, &frameFinished, p->packet);
+
+    // Did we get a video frame?
+    if(frameFinished) {
+        ScaleYCbCrToRGB565(p->pFrame->data[0], p->pFrame->data[1], p->pFrame->data[2],
+                           (uint8_t*)lcd_fb_start, 0, 0,
+                           p->pCodecCtx->width, p->pCodecCtx->height, LCD_X_SIZE, LCD_Y_SIZE,
+                           p->pFrame->linesize[0], p->pFrame->linesize[1], 2*LCD_X_SIZE,
+                           p->pCodecCtx->pix_fmt, FILTER_BILINEAR);
+        fps++;
+    }
+next:
+    av_free_packet(p->packet);
+    free(p);
   }
 }
 
+/*
+    BSP_LCD_SetLayerAddress(0, (uint32_t)data);
+    if(data_prev)
+      free(data_prev);
+    data_prev = data;
+
+    if(!data) {
+      // DMA2D completed
+      BSP_LCD_SetLayerAddress(0, frameBufferAddress);
+      continue;
+    }
+    HAL_DMA2D_Start_IT(&Dma2dHandle, (uint32_t)data, frameBufferAddress,
+                       LCD_X_SIZE, LCD_Y_SIZE);
+    vTaskDelay(LCD_FRAME_DELAY);
+*/
 static int mount_sdcard()
 {
   if(FATFS_LinkDriver(&SD_Driver, SDPath) != FR_OK)
@@ -393,6 +419,7 @@ static void reader_task_cb(void *arg)
 
     int width = LCD_X_SIZE;
     int height = LCD_Y_SIZE;
+#ifdef FF_SCALE
     // Allocate an AVFrame structure
     AVFrame *pFrameRGB = av_frame_alloc();
     if(pFrameRGB == NULL)
@@ -417,6 +444,7 @@ static void reader_task_cb(void *arg)
     BSP_LCD_LayerRgb565Init(0, (uint32_t)pFrameRGB->data[0]);
     BSP_LCD_SetLayerAddress(0, (uint32_t)pFrameRGB->data[0]);
     BSP_LCD_DisplayOn();
+#endif // FF_SCALE
 
     int frameFinished;
     AVPacket packet;
@@ -425,6 +453,14 @@ static void reader_task_cb(void *arg)
     while(av_read_frame(pFormatCtx, &packet)>=0) {
       // Is this a packet from the video stream?
       if(packet.stream_index==videoStream) {
+#if 1
+        // Send to video task
+        video_queue_t *data = malloc(sizeof(*data));
+        data->pFrame = pFrame;
+        data->pCodecCtx = pCodecCtx;
+        data->packet = &packet;
+        xQueueSendToBack(video_queue, &data, portMAX_DELAY);
+#else
         // Decode video frame
         avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished, &packet);
 
@@ -444,51 +480,37 @@ static void reader_task_cb(void *arg)
                              0, 0,
                              pCodecCtx->width, pCodecCtx->height,
                              width, height,
-                             pFrame->linesize[0], pFrame->linesize[1], pFrameRGB->linesize[0],
+                             pFrame->linesize[0], pFrame->linesize[1], 2*width/*pFrameRGB->linesize[0]*/,
                              pCodecCtx->pix_fmt,
                              FILTER_BILINEAR
                              );
           BSP_LCD_SetLayerAddress(0, (uint32_t)lcd_fb_start);
-#if 0
-                        const uint8_t *y_buf,
-                        const uint8_t *u_buf,
-                        const uint8_t *v_buf,
-                        uint8_t *rgb_buf,
-                        int source_x0,
-                        int source_y0,
-                        int source_width,
-                        int source_height,
-                        int width,
-                        int height,
-                        int y_pitch,
-                        int uv_pitch,
-                        int rgb_pitch,
-                        YUVType yuv_type,
-                        ScaleFilter filter
-#endif
 
           // Send the frame
 //          BSP_LCD_SetLayerAddress(0, (uint32_t)pFrameRGB->data[0]);
 //          HAL_DMA2D_Start_IT(&Dma2dHandle, (uint32_t)pFrame/*RGB*/->data[0], (uint32_t)lcd_fb_start,
 //                             LCD_X_SIZE, LCD_Y_SIZE);
 //            xQueueSendToBack(lcd_queue, &pFrameRGB->data[0], portMAX_DELAY);
-
-          uint32_t sec = xTaskGetTickCount() >> 10;
-          if(sec0 != sec) {
-            sec0 = sec;
-            printf("cpu usage: %d %%\n", osGetCPUUsage());
-          }
-
         }
+#endif
       }
       // Free the packet that was allocated by av_read_frame
-      av_free_packet(&packet);
-    }
+      if(packet.stream_index != videoStream) // video frame is freed by video task
+        av_free_packet(&packet);
 
+      uint32_t sec = xTaskGetTickCount() >> 10;
+      if(sec0 != sec) {
+        sec0 = sec;
+        printf("cpu usage: %d %%, fps: %d\n", osGetCPUUsage(), fps);
+        fps = 0;
+      }
+
+    }
+#ifdef FF_SCALE
     // Free the RGB image
     av_free(buffer);
     av_free(pFrameRGB);
-
+#endif
     // Free the YUV frame
     av_free(pFrame);
 
@@ -573,24 +595,24 @@ int play_init(void)
 //    DMA2D_Config(LCD_X_SIZE, LCD_X_SIZE, CM_RGB565);
     BSP_LCD_SetLayerAddress(0, (uint32_t)lcd_fb_start);
 #endif // 0
-    // Create LCD task
-    xTaskCreate(lcd_task_cb, "lcd_task", LCD_TASK_STACK, NULL, LCD_TASK_PRIORITY, &lcd_task);
-    ASSERT(lcd_task);
+    // Create video task
+    xTaskCreate(video_task_cb, "video_task", VIDEO_TASK_STACK, NULL, VIDEO_TASK_PRIORITY,
+                &video_task);
+    ASSERT(video_task);
+#if 0
     // Create LCD semaphore
     lcd_sema = xSemaphoreCreateBinary();
     ASSERT(lcd_sema);
     xSemaphoreGive(lcd_sema);
-
-    // Create LCD queue
-    lcd_queue = xQueueCreate(LCD_QUEUE_LENGTH, sizeof(char *));
-    ASSERT(lcd_queue);
+#endif
+    // Create video queue
+    video_queue = xQueueCreate(VIDEO_QUEUE_LENGTH, sizeof(video_queue_t*));
+    ASSERT(video_queue);
 
     // Create reader task
     xTaskCreate(reader_task_cb, "reader_task", READER_TASK_STACK, NULL, READER_TASK_PRIORITY,
                 &reader_task);
     ASSERT(reader_task);
-
-    // Create video task
 
     // Create audio task
 

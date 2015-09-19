@@ -2134,13 +2134,10 @@
           <name>$PROJ_DIR$\..\Core\Src\play.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\Core\Src\stm32f7xx_it.c</name>
+          <name>$PROJ_DIR$\..\Core\Src\scale.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\Core\Src\swscale.c</name>
-          <configuration>
-            <name>ffmpeg</name>
-          </configuration>
+          <name>$PROJ_DIR$\..\Core\Src\stm32f7xx_it.c</name>
         </file>
         <file>
           <name>$PROJ_DIR$\..\Core\Src\test.c</name>
