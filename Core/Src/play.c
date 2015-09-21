@@ -42,24 +42,23 @@
 #define LCD_Y_SIZE          RK043FN48H_HEIGHT
 #define FRAME_BUFFER_SIZE   (LCD_X_SIZE * LCD_Y_SIZE * 2) // rgb565
 
-#define VIDEO_TASK_STACK      (250*1024)
-#define VIDEO_TASK_PRIORITY   7
-#define VIDEO_QUEUE_LENGTH    16
-//#define LCD_FRAME_DELAY     (1000/60)
+#define AV_TASK_STACK      (150*1024)
+#define AV_TASK_PRIORITY   7
+#define AV_QUEUE_LENGTH    16
 
 #define READER_TASK_PRIORITY  5
-#define READER_TASK_STACK     (250*1024)
+#define READER_TASK_STACK     (800*1024)
 
 typedef struct {
     AVFrame *pFrame;
     AVCodecContext *pCodecCtx;
     AVPacket *packet;
-} video_queue_t;
+} av_queue_t;
 
-static QueueHandle_t      video_queue;
-static TaskHandle_t       video_task;
+static QueueHandle_t      av_queue;
+static TaskHandle_t       av_task;
 static TaskHandle_t       reader_task;
-static SemaphoreHandle_t  lcd_sema;
+//static SemaphoreHandle_t  lcd_sema;
 
 DMA2D_HandleTypeDef Dma2dHandle;
 volatile char *lcd_fb_start = NULL;
@@ -259,26 +258,47 @@ static void log_cb(void* ptr, int level, const char* fmt, va_list vl)
   vprintf(fmt, vl);
 }
 
-static void video_task_cb(void *arg)
+static void av_task_cb(void *arg)
 {
-  video_queue_t *p;
-  int frameFinished;
+  av_queue_t *p;
+  int vframe_finished = 0, aframe_finished = 0;
+
+  AVFrame aframe;
+  AVPacket apkt;
+//  int show = 0;
 
   while(1) {
-    xQueueReceive(video_queue, &p, portMAX_DELAY);
-    // Decode video frame
-    avcodec_decode_video2(p->pCodecCtx, p->pFrame, &frameFinished, p->packet);
+    xQueueReceive(av_queue, &p, portMAX_DELAY);
+//    if(++show < 4 && frameFinished)
+//      goto next;
+//    show = 0;
 
-    // Did we get a video frame?
-    if(frameFinished) {
-        ScaleYCbCrToRGB565(p->pFrame->data[0], p->pFrame->data[1], p->pFrame->data[2],
-                           (uint8_t*)lcd_fb_start, 0, 0,
-                           p->pCodecCtx->width, p->pCodecCtx->height, LCD_X_SIZE, LCD_Y_SIZE,
-                           p->pFrame->linesize[0], p->pFrame->linesize[1], 2*LCD_X_SIZE,
-                           p->pCodecCtx->pix_fmt, FILTER_BILINEAR);
-        fps++;
+    if(p->pCodecCtx->codec_type == AVMEDIA_TYPE_VIDEO) {
+        // Decode video frame
+        avcodec_decode_video2(p->pCodecCtx, p->pFrame, &vframe_finished, p->packet);
+        // Did we get a video frame?
+        if(vframe_finished) {
+            ScaleYCbCrToRGB565(p->pFrame->data[0], p->pFrame->data[1], p->pFrame->data[2],
+                               (uint8_t*)lcd_fb_start, 0, 0,
+                               p->pCodecCtx->width, p->pCodecCtx->height, LCD_X_SIZE, LCD_Y_SIZE,
+                               p->pFrame->linesize[0], p->pFrame->linesize[1], 2*LCD_X_SIZE,
+                               (YUVType)p->pCodecCtx->pix_fmt, FILTER_BILINEAR);
+    //        BSP_LCD_SetLayerAddress(0, (uint32_t)p->pFrame->data[1]);
+            fps++;
+        }
     }
-next:
+    if(p->pCodecCtx->codec_type == AVMEDIA_TYPE_AUDIO) {
+        // Decode audio frame
+        while(avcodec_decode_audio4(p->pCodecCtx, &aframe, &aframe_finished, &apkt) > 0) {
+            if(aframe_finished) {
+                size_t size = av_samples_get_buffer_size(NULL, p->pCodecCtx->channels,
+                        aframe.nb_samples, p->pCodecCtx->sample_fmt, 0);
+//                    uint8_t *audio_buf = memalign(4, size);
+//                    memcpy(audio_buf, aframe.data[0], size);
+            }
+        }
+    }
+//next:
     av_free_packet(p->packet);
     free(p);
   }
@@ -347,11 +367,11 @@ static void reader_task_cb(void *arg)
 #else
 //    const char *filename = "test6.avi";
 //    const char *filename = "H264_test1_480x360.mp4";
-    const char *filename = "MP4_640x360.mp4";
-//    printf("\nEnter filename:\n");
-//    char filename[64] = {0};
-//    scanf("%s", filename);
-//    printf("Playing: %s\n", filename);
+//    const char *filename = "MP4_640x360.mp4";
+    printf("\nEnter filename:\n");
+    char filename[64] = {0};
+    scanf("%s", filename);
+    printf("Playing: %s\n", filename);
 
     AVFormatContext *pFormatCtx = NULL;
     av_log_set_callback(&log_cb);
@@ -383,43 +403,65 @@ static void reader_task_cb(void *arg)
 
     av_dump_format(pFormatCtx, 0, filename, 0);
 
-    // Find the first video stream
-    int i, videoStream=-1;
-    for(i = 0; i < pFormatCtx->nb_streams; i++)
-        if(pFormatCtx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
-        videoStream = i;
-        break;
+    // Find the first audio and video streams
+    int i, videoStream=-1, audioStream=-1;
+    for(i = 0; i < pFormatCtx->nb_streams; i++) {
+        if(pFormatCtx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO
+           && videoStream < 0) {
+             videoStream = i;
+        }
+        if(pFormatCtx->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO
+           && audioStream < 0) {
+             audioStream = i;
+        }
     }
 
-    if(videoStream == -1)
-        Error_Handler(); // Didn't find a video stream
+    if(videoStream == -1 || audioStream == -1)
+        Error_Handler(); // No video or audio stream found
 
-    // Get a pointer to the codec context for the video stream
-    AVCodecContext *pCodecCtxOrig  = pFormatCtx->streams[videoStream]->codec;
+    // Get pointers to the codec context for audio and video streams
+    AVCodecContext *pCodecCtxOrig = pFormatCtx->streams[videoStream]->codec;
+    AVCodecContext *aCodecCtxOrig = pFormatCtx->streams[audioStream]->codec;
 
     // Find the decoder for the video stream
     AVCodec *pCodec = avcodec_find_decoder(pCodecCtxOrig->codec_id);
     if(pCodec == NULL) {
-      printf("Unsupported codec!\n");
+      printf("Unsupported video codec!\n");
+      Error_Handler(); // Codec not found
+    }
+
+    // Find the decoder for the audio stream
+    AVCodec *aCodec = avcodec_find_decoder(aCodecCtxOrig->codec_id);
+    if(aCodec == NULL) {
+      printf("Unsupported audio codec!\n");
       Error_Handler(); // Codec not found
     }
 
     // Copy context
     AVCodecContext *pCodecCtx = avcodec_alloc_context3(pCodec);
     if(avcodec_copy_context(pCodecCtx, pCodecCtxOrig) != 0) {
-      printf("Couldn't copy codec context");
+      printf("Couldn't copy video codec context");
       Error_Handler(); // Error copying codec context
     }
+
+    // Copy context
+    AVCodecContext *aCodecCtx = avcodec_alloc_context3(aCodec);
+    if(avcodec_copy_context(aCodecCtx, aCodecCtxOrig) != 0) {
+      printf("Couldn't copy audio codec context");
+      Error_Handler(); // Error copying codec context
+    }
+
     // Open codec
-    if(avcodec_open2(pCodecCtx, pCodec, &format_opts) < 0)
+    if(avcodec_open2(pCodecCtx, pCodec, &format_opts) < 0 ||
+       avcodec_open2(aCodecCtx, aCodec, NULL))
       Error_Handler(); // Could not open codec
 
     // Allocate video frame
     AVFrame *pFrame = av_frame_alloc();
 
+#ifdef FF_SCALE
     int width = LCD_X_SIZE;
     int height = LCD_Y_SIZE;
-#ifdef FF_SCALE
     // Allocate an AVFrame structure
     AVFrame *pFrameRGB = av_frame_alloc();
     if(pFrameRGB == NULL)
@@ -446,21 +488,21 @@ static void reader_task_cb(void *arg)
     BSP_LCD_DisplayOn();
 #endif // FF_SCALE
 
-    int frameFinished;
     AVPacket packet;
     uint32_t sec0 = xTaskGetTickCount() >> 10;
 
     while(av_read_frame(pFormatCtx, &packet)>=0) {
       // Is this a packet from the video stream?
-      if(packet.stream_index==videoStream) {
+      if(packet.stream_index == videoStream) {
 #if 1
         // Send to video task
-        video_queue_t *data = malloc(sizeof(*data));
+        av_queue_t *data = malloc(sizeof(*data));
         data->pFrame = pFrame;
         data->pCodecCtx = pCodecCtx;
         data->packet = &packet;
-        xQueueSendToBack(video_queue, &data, portMAX_DELAY);
+        xQueueSendToBack(av_queue, &data, portMAX_DELAY);
 #else
+        int frameFinished;
         // Decode video frame
         avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished, &packet);
 
@@ -495,8 +537,7 @@ static void reader_task_cb(void *arg)
 #endif
       }
       // Free the packet that was allocated by av_read_frame
-      if(packet.stream_index != videoStream) // video frame is freed by video task
-        av_free_packet(&packet);
+//      av_free_packet(&packet);
 
       uint32_t sec = xTaskGetTickCount() >> 10;
       if(sec0 != sec) {
@@ -586,7 +627,7 @@ int play_init(void)
     // LCD Init
     BSP_LCD_Init();
 #if 1
-    lcd_fb_start = malloc(FRAME_BUFFER_SIZE); // Double bufferring
+    lcd_fb_start = malloc(FRAME_BUFFER_SIZE);
     ASSERT(lcd_fb_start);
 
     BSP_LCD_LayerRgb565Init(0, (uint32_t)lcd_fb_start);
@@ -594,20 +635,20 @@ int play_init(void)
     BSP_LCD_DisplayOn();
 //    DMA2D_Config(LCD_X_SIZE, LCD_X_SIZE, CM_RGB565);
     BSP_LCD_SetLayerAddress(0, (uint32_t)lcd_fb_start);
-#endif // 0
-    // Create video task
-    xTaskCreate(video_task_cb, "video_task", VIDEO_TASK_STACK, NULL, VIDEO_TASK_PRIORITY,
-                &video_task);
-    ASSERT(video_task);
+#endif
+    // Create audio/video task
+    xTaskCreate(av_task_cb, "av_task", AV_TASK_STACK, NULL, AV_TASK_PRIORITY,
+                &av_task);
+    ASSERT(av_task);
 #if 0
     // Create LCD semaphore
     lcd_sema = xSemaphoreCreateBinary();
     ASSERT(lcd_sema);
     xSemaphoreGive(lcd_sema);
 #endif
-    // Create video queue
-    video_queue = xQueueCreate(VIDEO_QUEUE_LENGTH, sizeof(video_queue_t*));
-    ASSERT(video_queue);
+    // Create audio/video queue
+    av_queue = xQueueCreate(AV_QUEUE_LENGTH, sizeof(av_queue_t*));
+    ASSERT(av_queue);
 
     // Create reader task
     xTaskCreate(reader_task_cb, "reader_task", READER_TASK_STACK, NULL, READER_TASK_PRIORITY,

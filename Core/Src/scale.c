@@ -536,33 +536,11 @@ void ScaleYCbCrToRGB565(const uint8_t *y_buf,
       ctx.y_yweight = yweight;
       ctx.uv_yweight = uvweight;
 //      (*scale_row)(&ctx, dither);
-/*
-Input args:
-%[x0]  = rgb_row
-%[x1]  = source_x_q16
-%[x2]  = pitch
-%[x3]  = yweight
-%[x4]  = source_uv_xoffs_q16
-%[x5]  = source_dx_q16
-%[x6]  = width
-%[x7]  = y_row
-%[x8]  = u_row
-%[x9]  = v_row
-%[x10] = DITHER_BIAS[dither][0]
-%[x11] = DITHER_BIAS[dither][1]
-%[x12] = DITHER_BIAS[dither][2]
-%[x13] = DITHER_BIAS[dither^3][0]
-%[x14] = DITHER_BIAS[dither^3][1]
-%[x15] = DITHER_BIAS[dither^3][2]
-tmp: r7, r8, r9, r10, r11, r12, r14
-*/
+
 __asm__ volatile (
 "ScaleYCbCr42xToRGB565_BilinearY_Row:                                                             \n"
 "scale_loop:                                                                                      \n"
-"@ even pixel                                                                                     \n"
-"LDR     r8, %[x7]                                                                                \n"
-"PLD     [r8]                                                                                     \n"
-"ADD     r7, r8, %[x1], LSR #16  @ &ctx->y_row[source_x]                                          \n"
+"ADD     r7, %[x7], %[x1], LSR #16  @ &ctx->y_row[source_x] : even pixel                          \n"
 "LDRH    r8, [r7]                @ 0:0:b:a                                                        \n"
 "LDRH    r9, [r7, %[x2]]         @ 0:0:d:c                                                        \n"
 "MOV     r11, #128                                                                                \n"
@@ -570,9 +548,9 @@ __asm__ volatile (
 "UXTAH   r10, r11, r8, ROR #24   @ (a<<8)+128                                                     \n"
 "AND     r8, r8, #0xFF00         @ 0:0:b:0                                                        \n"
 "ADD     r8, r8, r11             @ (b<<8)+128                                                     \n"
-"SXTB    r7, r9                 @ 0:0:0:c-a                                                      \n"
+"SXTB    r7, r9                  @ 0:0:0:c-a                                                      \n"
 "SXTB    r9, r9, ROR #8          @ 0:0:0:d-b                                                      \n"
-"SMLABB  r10, r7, %[x3], r10    @ (a<<8)+(c-a)*yweight+128                                       \n"
+"SMLABB  r10, r7, %[x3], r10     @ (a<<8)+(c-a)*yweight+128                                       \n"
 "SMLABB  r8, r9, %[x3], r8       @ (b<<8)+(d-b)*yweight+128                                       \n"
 "SUB     r8, r8, r10                                                                              \n"
 "SXTH    r8, r8, ROR #8          @ (b-a)                                                          \n"
@@ -580,85 +558,77 @@ __asm__ volatile (
 "UBFX    r9, r9, #8, #8          @ xweight = ((source_x_q16&0xFFFF)+128)>>8                       \n"
 "SMLABB  r8, r8, r9, r10                                                                          \n"
 "UXTB    r8, r8, ROR #8          @ y=((a<<8)+(b-a)*xweight+128)>>8                                \n"
-"                                @ r8 = y, r9 = u, r10 = v, r11 = bias                            \n"
 "ADD     r7, %[x1], %[x4]                                                                         \n"
 "LSR     r7, r7, #17             @ source_x = (source_x_q16+ctx->source_uv_xoffs_q16)>>17         \n"
 "ADD     %[x1], %[x5]            @ source_x_q16 += ctx->source_dx_q16                             \n"
-"LDR     r9, %[x8]                                                                                \n"
-"LDRB    r9, [r9, r7]            @ u = ctx->u_row[source_x]                                       \n"
+"LDRB    r9, [%[x8], r7]         @ u = ctx->u_row[source_x]                                       \n"
 "LDR     r10, %[x9]                                                                               \n"
 "LDRB    r10, [r10, r7]          @ v = ctx->v_row[source_x]                                       \n"
-"LDR     r11, =%[x10]            @ DITHER_BIAS[dither][0]                                         \n"
-"MOV     r12, #74                                                                                 \n"
-"MOVT    r12, #102               @ 0:102:0:74                                                     \n"
-"PKHBT   r14, r8, r10, LSL #16   @ 0:v:0:y                                                        \n"
-"SMLAD   r11, r12, r14, r11      @ 74*y+102*v+DITHER_BIAS[dither][0]                              \n"
-"USAT    r7, #5, r11, ASR #9     @ r =clamped((74*y+102*v+DITHER_BIAS[dither][0])>>9, 0, 31)      \n"
-"LSL     r7, r7, #11             @ (r<<11)                                                        \n"
-"LDR     r11, =%[x11]            @ DITHER_BIAS[dither][1]                                         \n"
-"MOVT    r12, 0xFFCC             @ 0:-52:0:74                                                     \n"
-"SMLAD   r11, r12, r14, r11      @ 74*y-52*v+DITHER_BIAS[dither][1]                               \n"
-"MOV     r10, #-25                                                                                \n"
-"SMLABB  r11, r10, r9, r11       @ 74*y-25*u-52*v+DITHER_BIAS[dither][1]                          \n"
-"USAT    r11, #6, r11, ASR #8    @ g = clamped((74*y-25*u-52*v+DITHER_BIAS[dither][1])>>8, 0, 63) \n"
-"ORR     r7, r7, r11, LSL #5     @ (r<<11 | g<<5)                                                 \n"
-"LDR     r11, =%[x12]            @ DITHER_BIAS[dither][2]                                         \n"
-"MOVT    r12, #129               @ 0:129:0:74                                                     \n"
-"PKHBT   r14, r8, r9, LSL #16    @ 0:u:0:y                                                        \n"
-"SMLAD   r11, r12, r14, r11      @ 74*y+129*u+DITHER_BIAS[dither][2]                              \n"
-"USAT    r11, #5, r11, ASR #9    @ b = clamped((74*y+129*u+DITHER_BIAS[dither][2])>>9, 0, 31)@    \n"
-"ORR     r7, r7, r11             @ (r<<11 | g<<5 | b)@                                            \n"
-"STRH.W  r7, [%[x0]], #2         @ ctx->rgb_row[x] = yu2rgb565(y, u, v, dither)@                  \n"
-"@ odd pixel                                                                                      \n"
-"LDR     r8, %[x7]                                                                                \n"
-"ADD     r7, r8, %[x1], LSR #16  @ &ctx->y_row[source_x]                                          \n"
+"LDR     r7, =%[x12]             @ DITHER_BIAS[0][2]                                              \n"
+"MOV     r11, #74                                                                                 \n"
+"MOVT    r11, #129               @ 0:129:0:74                                                     \n"
+"PKHBT   r9, r8, r9, LSL #16     @ 0:u:0:y                                                        \n"
+"PKHBT   r8, r8, r10, LSL #16    @ 0:v:0:y                                                        \n"
+"SMLAD   r7, r11, r9, r7         @ 74*y+129*u+DITHER_BIAS[0][2]                                   \n"
+"USAT    r10, #5, r7, ASR #9     @ b = clamped((74*y+129*u+DITHER_BIAS[0][2])>>9, 0, 31)          \n"
+"LDR     r7, =%[x10]             @ DITHER_BIAS[0][0]                                              \n"
+"MOVT    r11, #102               @ 0:102:0:74                                                     \n"
+"SMLAD   r7, r11, r8, r7         @ 74*y+102*v+DITHER_BIAS[0][0]                                   \n"
+"USAT    r7, #5, r7, ASR #9      @ r =clamped((74*y+102*v+DITHER_BIAS[0][0])>>9, 0, 31)           \n"
+"ORR     r10, r10, r7, LSL #11   @ (r<<11 | b)                                                    \n"
+"LDR     r7, =%[x11]             @ DITHER_BIAS[0][1]                                              \n"
+"MOVT    r11, 0xFFCC             @ 0:-52:0:74                                                     \n"
+"SMLAD   r7, r11, r8, r7         @ 74*y-52*v+DITHER_BIAS[0][1]                                    \n"
+"MOV     r11, #-25                                                                                \n"
+"SMLABT  r7, r11, r9, r7         @ 74*y-25*u-52*v+DITHER_BIAS[0][1]                               \n"
+"USAT    r7, #6, r7, ASR #8      @ g = clamped((74*y-25*u-52*v+DITHER_BIAS[0][1])>>8, 0, 63)      \n"
+"ORR     r10, r10, r7, LSL #5    @ (r<<11 | g<<5 | b)                                             \n"
+"STRH.W  r10, [%[x0]], #2        @ ctx->rgb_row[x] = yu2rgb565(y, u, v, 0)                        \n"
+"ADD     r7, %[x7], %[x1], LSR #16  @ &ctx->y_row[source_x] : odd pixel                           \n"
 "LDRH    r8, [r7]                @ 0:0:b:a                                                        \n"
 "LDRH    r9, [r7, %[x2]]         @ 0:0:d:c                                                        \n"
-"MOV     r12, #128                                                                                \n"
+"MOV     r11, #128                                                                                \n"
 "USUB8   r9, r9, r8              @ 0:0:d-b:c-a                                                    \n"
-"UXTAH   r10, r12, r8, ROR #24   @ (a<<8)+128                                                     \n"
+"UXTAH   r10, r11, r8, ROR #24   @ (a<<8)+128                                                     \n"
 "AND     r8, r8, #0xFF00         @ 0:0:b:0                                                        \n"
-"ADD     r8, r8, r12             @ (b<<8)+128                                                     \n"
-"SXTB    r11, r9                 @ 0:0:0:c-a                                                      \n"
+"ADD     r8, r8, r11             @ (b<<8)+128                                                     \n"
+"SXTB    r7, r9                  @ 0:0:0:c-a                                                      \n"
 "SXTB    r9, r9, ROR #8          @ 0:0:0:d-b                                                      \n"
-"SMLABB  r10, r11, %[x3], r10    @ (a<<8)+(c-a)*yweight+128                                       \n"
+"SMLABB  r10, r7, %[x3], r10     @ (a<<8)+(c-a)*yweight+128                                       \n"
 "SMLABB  r8, r9, %[x3], r8       @ (b<<8)+(d-b)*yweight+128                                       \n"
 "SUB     r8, r8, r10                                                                              \n"
 "SXTH    r8, r8, ROR #8          @ (b-a)                                                          \n"
-"ADD     r7, %[x1], r12          @ source_x_q16 + 128                                             \n"
-"UBFX    r7, r7, #8, #8          @ xweight = ((source_x_q16&0xFFFF)+128)>>8                       \n"
-"SMLABB  r8, r8, r7, r10                                                                          \n"
+"ADD     r9, %[x1], r11          @ source_x_q16 + 128                                             \n"
+"UBFX    r9, r9, #8, #8          @ xweight = ((source_x_q16&0xFFFF)+128)>>8                       \n"
+"SMLABB  r8, r8, r9, r10                                                                          \n"
 "UXTB    r8, r8, ROR #8          @ y=((a<<8)+(b-a)*xweight+128)>>8                                \n"
-"                                @ r8 = y, r9 = u, r10 = v, r11 = bias                             \n"
-"ADD     r7, %[x1], %[x4]                                                                               \n"
-"LSR     r7, r7, #17             @ source_x = (source_x_q16+ctx->source_uv_xoffs_q16)>>17@        \n"
-"ADD     %[x1], %[x5]                  @ source_x_q16 += ctx->source_dx_q16@                            \n"
-"LDR     r9, %[x8]                                                                            \n"
-"LDRB    r9, [r9, r7]            @ u = ctx->u_row[source_x]@                                      \n"
-"LDR     r10, %[x9]                                                                            \n"
-"LDRB    r10, [r10, r7]            @ v = ctx->v_row[source_x]@                                      \n"
-"LDR     r11, =%[x13]                @ DITHER_BIAS[dither][0]                                         \n"
-"MOV     r12, #74                                                                                 \n"
-"MOVT    r12, #102               @ 0:102:0:74                                                     \n"
-"PKHBT   r14, r8, r10, LSL #16    @ 0:v:0:y                                                        \n"
-"SMLAD   r11, r12, r14, r11      @ 74*y+102*v+DITHER_BIAS[dither][0]                              \n"
-"USAT    r7, #5, r11, ASR #9     @ r =clamped((74*y+102*v+DITHER_BIAS[dither][0])>>9, 0, 31)@     \n"
-"LSL     r7, r7, #11             @ (r<<11)                                                        \n"
-"LDR     r11, =%[x14]                @ DITHER_BIAS[dither][1]                                         \n"
-"MOVT    r12, 0xFFCC               @ 0:-52:0:74                                                     \n"
-"SMLAD   r11, r12, r14, r11      @ 74*y-52*v+DITHER_BIAS[dither][1]                               \n"
-"MOV     r10, #-25                                                                                 \n"
-"SMLABB  r11, r10, r9, r11        @ 74*y-25*u-52*v+DITHER_BIAS[dither][1]                          \n"
-"USAT    r11, #6, r11, ASR #8    @ g = clamped((74*y-25*u-52*v+DITHER_BIAS[dither][1])>>8, 0, 63)@\n"
-"ORR     r7, r7, r11, LSL #5     @ (r<<11 | g<<5)                                                 \n"
-"LDR     r11, =%[x15]                @ DITHER_BIAS[dither][2]                                         \n"
-"MOVT    r12, #129               @ 0:129:0:74                                                     \n"
-"PKHBT   r14, r8, r9, LSL #16    @ 0:u:0:y                                                        \n"
-"SMLAD   r11, r12, r14, r11      @ 74*y+129*u+DITHER_BIAS[dither][2]                              \n"
-"USAT    r11, #5, r11, ASR #9    @ b = clamped((74*y+129*u+DITHER_BIAS[dither][2])>>9, 0, 31)@    \n"
-"ORR     r7, r7, r11             @ (r<<11 | g<<5 | b)@                                            \n"
-"STRH.W  r7, [%[x0]], #2            @ ctx->rgb_row[x] = yu2rgb565(y, u, v, dither)@                  \n"
-"SUBS    %[x6], %[x6], #2            @ width-=2                                                       \n"
+"ADD     r7, %[x1], %[x4]                                                                         \n"
+"LSR     r7, r7, #17             @ source_x = (source_x_q16+ctx->source_uv_xoffs_q16)>>17         \n"
+"ADD     %[x1], %[x5]            @ source_x_q16 += ctx->source_dx_q16                             \n"
+"LDRB    r9, [%[x8], r7]         @ u = ctx->u_row[source_x]                                       \n"
+"LDR     r10, %[x9]                                                                               \n"
+"LDRB    r10, [r10, r7]          @ v = ctx->v_row[source_x]                                       \n"
+"LDR     r7, =%[x15]             @ DITHER_BIAS[3][2]                                              \n"
+"MOV     r11, #74                                                                                 \n"
+"MOVT    r11, #129               @ 0:129:0:74                                                     \n"
+"PKHBT   r9, r8, r9, LSL #16     @ 0:u:0:y                                                        \n"
+"PKHBT   r8, r8, r10, LSL #16    @ 0:v:0:y                                                        \n"
+"SMLAD   r7, r11, r9, r7         @ 74*y+129*u+DITHER_BIAS[3][2]                                   \n"
+"USAT    r10, #5, r7, ASR #9     @ b = clamped((74*y+129*u+DITHER_BIAS[3][2])>>9, 0, 31)          \n"
+"LDR     r7, =%[x13]             @ DITHER_BIAS[3][0]                                              \n"
+"MOVT    r11, #102               @ 0:102:0:74                                                     \n"
+"SMLAD   r7, r11, r8, r7         @ 74*y+102*v+DITHER_BIAS[3][0]                                   \n"
+"USAT    r7, #5, r7, ASR #9      @ r =clamped((74*y+102*v+DITHER_BIAS[3][0])>>9, 0, 31)           \n"
+"ORR     r10, r10, r7, LSL #11   @ (r<<11 | b)                                                    \n"
+"LDR     r7, =%[x14]             @ DITHER_BIAS[3][1]                                              \n"
+"MOVT    r11, 0xFFCC             @ 0:-52:0:74                                                     \n"
+"SMLAD   r7, r11, r8, r7         @ 74*y-52*v+DITHER_BIAS[3][1]                                    \n"
+"MOV     r11, #-25                                                                                \n"
+"SMLABT  r7, r11, r9, r7         @ 74*y-25*u-52*v+DITHER_BIAS[3][1]                               \n"
+"USAT    r7, #6, r7, ASR #8      @ g = clamped((74*y-25*u-52*v+DITHER_BIAS[3][1])>>8, 0, 63)      \n"
+"ORR     r10, r10, r7, LSL #5    @ (r<<11 | g<<5 | b)                                             \n"
+"STRH.W  r10, [%[x0]], #2        @ ctx->rgb_row[x] = yu2rgb565(y, u, v, 0)                        \n"
+"SUBS    %[x6], %[x6], #2        @ width-=2                                                       \n"
 "BNE     scale_loop                                                                               \n"
 ::
     [x0]"r"(ctx.rgb_row),
@@ -668,16 +638,16 @@ __asm__ volatile (
     [x4]"r"(ctx.source_uv_xoffs_q16),
     [x5]"r"(ctx.source_dx_q16),
     [x6]"r"(ctx.width),
-    [x7]"rm"(ctx.y_row),
-    [x8]"rm"(ctx.u_row),
-    [x9]"rm"(ctx.v_row),
+    [x7]"r"(ctx.y_row),
+    [x8]"r"(ctx.u_row),
+    [x9]"m"(ctx.v_row),
     [x10]"i"(DITHER_BIAS[0][0]),
     [x11]"i"(DITHER_BIAS[0][1]),
     [x12]"i"(DITHER_BIAS[0][2]),
     [x13]"i"(DITHER_BIAS[3][0]),
     [x14]"i"(DITHER_BIAS[3][1]),
     [x15]"i"(DITHER_BIAS[3][2])
-:   "cc", "memory", "r7", "r8", "r9", "r10", "r11", "r12", "r14");
+:   "cc", "memory", "r7", "r8", "r9", "r10", "r11");
 
       dither ^= 2;
     }
