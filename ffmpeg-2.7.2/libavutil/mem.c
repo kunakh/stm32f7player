@@ -71,7 +71,7 @@ static size_t max_alloc_size= INT_MAX;
 void av_max_alloc(size_t max){
     max_alloc_size = max;
 }
-
+#if 0
 void *av_malloc(size_t size)
 {
     void *ptr = NULL;
@@ -139,7 +139,7 @@ void *av_malloc(size_t size)
 #endif
     return ptr;
 }
-
+#endif
 void *av_realloc(void *ptr, size_t size)
 {
 #if CONFIG_MEMALIGN_HACK

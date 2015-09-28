@@ -284,8 +284,6 @@ void ScaleYCbCrToRGB565(const uint8_t *y_buf,
                         const uint8_t *u_buf,
                         const uint8_t *v_buf,
                         uint8_t *rgb_buf,
-                        int source_x0,
-                        int source_y0,
                         int source_width,
                         int source_height,
                         int width,
@@ -295,9 +293,9 @@ void ScaleYCbCrToRGB565(const uint8_t *y_buf,
                         int rgb_pitch,
                         YUVType yuv_type,
                         ScaleFilter filter) {
-  int source_x0_q16;
+  register int source_x0_q16;
   int source_y0_q16;
-  int source_dx_q16;
+  register int source_dx_q16;
   int source_dy_q16;
   int source_uv_xoffs_q16;
   int source_uv_yoffs_q16;
@@ -307,11 +305,8 @@ void ScaleYCbCrToRGB565(const uint8_t *y_buf,
   int ymax;
   int uvmin;
   int uvmax;
-  int dither;
-  /*We don't support negative destination rectangles (just flip the source
-     instead), and for empty ones there's nothing to do.*/
-  if (width <= 0 || height <= 0)
-    return;
+//  int dither;
+
   /*These bounds are required to avoid 16.16 fixed-point overflow.*/
   NS_ASSERTION(source_x0 > (INT_MIN>>16) && source_x0 < (INT_MAX>>16),
     "ScaleYCbCrToRGB565 source X offset out of bounds.");
@@ -388,9 +383,9 @@ void ScaleYCbCrToRGB565(const uint8_t *y_buf,
      but nearly all software converters in existence (at least those that are
      open source, and many that are not) use JPEG cositing instead of MPEG.*/
   source_dx_q16 = (source_width<<16) / width;
-  source_x0_q16 = (source_x0<<16)+(source_dx_q16>>1)-0x8000;
+  source_x0_q16 = (source_dx_q16>>1)-0x8000;
   source_dy_q16 = (source_height<<16) / height;
-  source_y0_q16 = (source_y0<<16)+(source_dy_q16>>1)-0x8000;
+  source_y0_q16 = (source_dy_q16>>1)-0x8000;
   x_shift = (yuv_type != YV24);
   y_shift = (yuv_type == YV12);
   /*These two variables hold the difference between the origins of the Y' and
@@ -400,14 +395,14 @@ void ScaleYCbCrToRGB565(const uint8_t *y_buf,
   source_uv_yoffs_q16 = -(y_shift<<15);
   /*Compute the range of source rows we'll actually use.
     This doesn't guarantee we won't read outside this range.*/
-  ymin = source_height >= 0 ? source_y0 : source_y0+source_height-1;
-  ymax = source_height >= 0 ? source_y0+source_height-1 : source_y0;
+  ymin = 0;
+  ymax = source_height-1;
   uvmin = ymin>>y_shift;
   uvmax = ((ymax+1+y_shift)>>y_shift)-1;
   /*Pick a dithering pattern.
     The "&3" at the end is just in case RAND_MAX is lying.*/
-  dither = 0;//(rand()/(RAND_MAX>>2))&3;
-
+//  dither = (rand()/(RAND_MAX>>2))&3;
+#if 0
   /*Nearest-neighbor scaling.*/
   if (filter == FILTER_NONE) {
     yuv2rgb565_row_scale_nearest_ctx ctx;
@@ -442,9 +437,11 @@ void ScaleYCbCrToRGB565(const uint8_t *y_buf,
     }
   }
   /*Bilinear scaling.*/
-  else {
-    yuv2rgb565_row_scale_bilinear_ctx ctx;
-    yuv2rgb565_row_scale_bilinear_func scale_row;
+  else
+#endif // 0
+  {
+//    yuv2rgb565_row_scale_bilinear_ctx ctx;
+//    yuv2rgb565_row_scale_bilinear_func scale_row;
     int uvxscale_min;
     int uvxscale_max;
     int uvyscale_min;
@@ -478,6 +475,8 @@ void ScaleYCbCrToRGB565(const uint8_t *y_buf,
       /*Add the rounding offsets now.*/
       source_uv_xoffs_q16 += 1<<(15+x_shift);
       source_uv_yoffs_q16 += 1<<(15+y_shift);
+    }
+#if 0
       if (yuv_type != YV24) {
         scale_row =
 //TODO: fix NEON asm for iOS
@@ -497,17 +496,18 @@ void ScaleYCbCrToRGB565(const uint8_t *y_buf,
       else
         scale_row = ScaleYCbCr444ToRGB565_Bilinear_Row_C;
     }
-    ctx.width = width;
-    ctx.y_pitch = y_pitch;
-    ctx.source_x0_q16 = source_x0_q16;
-    ctx.source_dx_q16 = source_dx_q16;
-    ctx.source_uv_xoffs_q16 = source_uv_xoffs_q16;
-    ctx.uv_pitch = uv_pitch;
+#endif // 0
+//    ctx.width = width;
+//    ctx.y_pitch = y_pitch;
+//    ctx.source_x0_q16 = source_x0_q16;
+//    ctx.source_dx_q16 = source_dx_q16;
+//    ctx.source_uv_xoffs_q16 = source_uv_xoffs_q16;
+//    ctx.uv_pitch = uv_pitch;
     for (y=0; y<height; y++) {
       int source_y;
-      int yweight;
-      int uvweight;
-      ctx.rgb_row = (uint16_t *)(rgb_buf + y*rgb_pitch);
+      register int yweight;
+//      int uvweight;
+      register uint16_t *rgb_row = (uint16_t *)(rgb_buf + y*rgb_pitch);
       source_y = (source_y0_q16+128)>>16;
       yweight = ((source_y0_q16+128)>>8)&0xFF;
       if (source_y < ymin) {
@@ -518,24 +518,23 @@ void ScaleYCbCrToRGB565(const uint8_t *y_buf,
         source_y = ymax;
         yweight = 0;
       }
-      ctx.y_row = y_buf + source_y*y_pitch;
+      register const uint8_t *y_row = y_buf + source_y*y_pitch;
       source_y = source_y0_q16+source_uv_yoffs_q16+(128<<y_shift);
       source_y0_q16 += source_dy_q16;
-      uvweight = source_y>>(8+y_shift)&0xFF;
+//      uvweight = source_y>>(8+y_shift)&0xFF;
       source_y >>= 16+y_shift;
       if (source_y < uvmin) {
         source_y = uvmin;
-        uvweight = 0;
+//        uvweight = 0;
       }
       if (source_y > uvmax) {
         source_y = uvmax;
-        uvweight = 0;
+//        uvweight = 0;
       }
-      ctx.u_row = u_buf + source_y*uv_pitch;
-      ctx.v_row = v_buf + source_y*uv_pitch;
-      ctx.y_yweight = yweight;
-      ctx.uv_yweight = uvweight;
-//      (*scale_row)(&ctx, dither);
+      register const uint8_t *u_row = u_buf + source_y*uv_pitch;
+      register const uint8_t *v_row = v_buf + source_y*uv_pitch;
+//      ctx.y_yweight = yweight;
+//      ctx.uv_yweight = uvweight;
 
 __asm__ volatile (
 "ScaleYCbCr42xToRGB565_BilinearY_Row:                                                             \n"
@@ -558,12 +557,12 @@ __asm__ volatile (
 "UBFX    r9, r9, #8, #8          @ xweight = ((source_x_q16&0xFFFF)+128)>>8                       \n"
 "SMLABB  r8, r8, r9, r10                                                                          \n"
 "UXTB    r8, r8, ROR #8          @ y=((a<<8)+(b-a)*xweight+128)>>8                                \n"
-"ADD     r7, %[x1], %[x4]                                                                         \n"
+"LDR     r7, %[x4]               @ source_uv_xoffs_q16                                            \n"
+"ADD     r7, %[x1], r7                                                                            \n"
 "LSR     r7, r7, #17             @ source_x = (source_x_q16+ctx->source_uv_xoffs_q16)>>17         \n"
 "ADD     %[x1], %[x5]            @ source_x_q16 += ctx->source_dx_q16                             \n"
 "LDRB    r9, [%[x8], r7]         @ u = ctx->u_row[source_x]                                       \n"
-"LDR     r10, %[x9]                                                                               \n"
-"LDRB    r10, [r10, r7]          @ v = ctx->v_row[source_x]                                       \n"
+"LDRB    r10, [%[x9], r7]        @ v = ctx->v_row[source_x]                                       \n"
 "LDR     r7, =%[x12]             @ DITHER_BIAS[0][2]                                              \n"
 "MOV     r11, #74                                                                                 \n"
 "MOVT    r11, #129               @ 0:129:0:74                                                     \n"
@@ -602,12 +601,12 @@ __asm__ volatile (
 "UBFX    r9, r9, #8, #8          @ xweight = ((source_x_q16&0xFFFF)+128)>>8                       \n"
 "SMLABB  r8, r8, r9, r10                                                                          \n"
 "UXTB    r8, r8, ROR #8          @ y=((a<<8)+(b-a)*xweight+128)>>8                                \n"
-"ADD     r7, %[x1], %[x4]                                                                         \n"
+"LDR     r7, %[x4]               @ source_uv_xoffs_q16                                            \n"
+"ADD     r7, %[x1], r7                                                                            \n"
 "LSR     r7, r7, #17             @ source_x = (source_x_q16+ctx->source_uv_xoffs_q16)>>17         \n"
 "ADD     %[x1], %[x5]            @ source_x_q16 += ctx->source_dx_q16                             \n"
 "LDRB    r9, [%[x8], r7]         @ u = ctx->u_row[source_x]                                       \n"
-"LDR     r10, %[x9]                                                                               \n"
-"LDRB    r10, [r10, r7]          @ v = ctx->v_row[source_x]                                       \n"
+"LDRB    r10, [%[x9], r7]        @ v = ctx->v_row[source_x]                                       \n"
 "LDR     r7, =%[x15]             @ DITHER_BIAS[3][2]                                              \n"
 "MOV     r11, #74                                                                                 \n"
 "MOVT    r11, #129               @ 0:129:0:74                                                     \n"
@@ -631,16 +630,16 @@ __asm__ volatile (
 "SUBS    %[x6], %[x6], #2        @ width-=2                                                       \n"
 "BNE     scale_loop                                                                               \n"
 ::
-    [x0]"r"(ctx.rgb_row),
-    [x1]"r"(ctx.source_x0_q16),
-    [x2]"r"(ctx.y_pitch),
-    [x3]"r"(ctx.y_yweight),
-    [x4]"r"(ctx.source_uv_xoffs_q16),
-    [x5]"r"(ctx.source_dx_q16),
-    [x6]"r"(ctx.width),
-    [x7]"r"(ctx.y_row),
-    [x8]"r"(ctx.u_row),
-    [x9]"m"(ctx.v_row),
+    [x0]"r"(rgb_row),
+    [x1]"r"(source_x0_q16),
+    [x2]"r"(y_pitch),
+    [x3]"r"(yweight),
+    [x4]"m"(source_uv_xoffs_q16),
+    [x5]"r"(source_dx_q16),
+    [x6]"r"(width),
+    [x7]"r"(y_row),
+    [x8]"r"(u_row),
+    [x9]"r"(v_row),
     [x10]"i"(DITHER_BIAS[0][0]),
     [x11]"i"(DITHER_BIAS[0][1]),
     [x12]"i"(DITHER_BIAS[0][2]),
@@ -649,7 +648,7 @@ __asm__ volatile (
     [x15]"i"(DITHER_BIAS[3][2])
 :   "cc", "memory", "r7", "r8", "r9", "r10", "r11");
 
-      dither ^= 2;
+//      dither ^= 2;
     }
   }
 }

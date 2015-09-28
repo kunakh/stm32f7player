@@ -18,8 +18,6 @@ void ScaleYCbCrToRGB565(const uint8_t *y_buf,
                         const uint8_t *u_buf,
                         const uint8_t *v_buf,
                         uint8_t *rgb_buf,
-                        int source_x0,
-                        int source_y0,
                         int source_width,
                         int source_height,
                         int width,
@@ -27,7 +25,5 @@ void ScaleYCbCrToRGB565(const uint8_t *y_buf,
                         int y_pitch,
                         int uv_pitch,
                         int rgb_pitch,
-                        YUVType yuv_type,
-                        ScaleFilter filter);
-
+                        YUVType yuv_type);
 #endif // __SWSCALE_H__

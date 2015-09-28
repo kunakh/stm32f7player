@@ -14,6 +14,7 @@ OBJS = hscale_fast_bilinear.o                           \
        swscale_unscaled.o                               \
        utils.o                                          \
        yuv2rgb.o                                        \
+       scale.o                                          \
 
 OBJS-$(CONFIG_SHARED)        += log2_tab.o
 

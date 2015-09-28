@@ -45,10 +45,26 @@ define block LIB_CODE
     readonly object liblibswscale.a
 };
 
+/*
+define block FAST_CODE
+{
+    readonly object scale.o
+};
+*/
+
 place in ROM_region   { readonly };
 place in SDRAM_region { readwrite, block CSTACK, block HEAP };
 place in IRAM_region  { section __iram };
 
 place at address mem:__ICFEDIT_region_QSPI_start__ { readonly section .qspi, block LIB_CODE };
+
+export symbol __ICFEDIT_region_IROM_start__;
+export symbol __ICFEDIT_region_IROM_end__;
+export symbol __ICFEDIT_region_SDRAM_start__;
+export symbol __ICFEDIT_region_SDRAM_end__;
+export symbol __ICFEDIT_region_IRAM_start__;
+export symbol __ICFEDIT_region_IRAM_end__;
+export symbol __ICFEDIT_region_QSPI_start__;
+export symbol __ICFEDIT_region_QSPI_end__;
 
 /*place in QSPI_region  { section .qspi, last block LIB_CODE };*/

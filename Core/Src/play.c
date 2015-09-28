@@ -42,12 +42,20 @@
 #define LCD_Y_SIZE          RK043FN48H_HEIGHT
 #define FRAME_BUFFER_SIZE   (LCD_X_SIZE * LCD_Y_SIZE * 2) // rgb565
 
-#define AV_TASK_STACK      (150*1024)
+#define AV_TASK_STACK      (5*1024)
 #define AV_TASK_PRIORITY   7
 #define AV_QUEUE_LENGTH    16
 
 #define READER_TASK_PRIORITY  5
-#define READER_TASK_STACK     (800*1024)
+#define READER_TASK_STACK     (5*1024)
+
+#pragma location = "__iram"
+#pragma data_alignment=32
+uint32_t av_task_stack[AV_TASK_STACK];
+
+#pragma location = "__iram"
+#pragma data_alignment=32
+uint32_t reader_task_stack[READER_TASK_STACK];
 
 typedef struct {
     AVFrame *pFrame;
@@ -56,8 +64,8 @@ typedef struct {
 } av_queue_t;
 
 static QueueHandle_t      av_queue;
-static TaskHandle_t       av_task;
-static TaskHandle_t       reader_task;
+//static TaskHandle_t       av_task;
+//static TaskHandle_t       reader_task;
 //static SemaphoreHandle_t  lcd_sema;
 
 DMA2D_HandleTypeDef Dma2dHandle;
@@ -258,9 +266,10 @@ static void log_cb(void* ptr, int level, const char* fmt, va_list vl)
   vprintf(fmt, vl);
 }
 
+//#define SDMMC_READ_SPEED
 static void av_task_cb(void *arg)
 {
-  av_queue_t *p;
+  av_queue_t m;
   int vframe_finished = 0, aframe_finished = 0;
 
   AVFrame aframe;
@@ -268,39 +277,35 @@ static void av_task_cb(void *arg)
 //  int show = 0;
 
   while(1) {
-    xQueueReceive(av_queue, &p, portMAX_DELAY);
-//    if(++show < 4 && frameFinished)
-//      goto next;
-//    show = 0;
-
-    if(p->pCodecCtx->codec_type == AVMEDIA_TYPE_VIDEO) {
+    xQueueReceive(av_queue, &m, portMAX_DELAY);
+#ifndef SDMMC_READ_SPEED
+    if(m.pCodecCtx->codec_type == AVMEDIA_TYPE_VIDEO) {
         // Decode video frame
-        avcodec_decode_video2(p->pCodecCtx, p->pFrame, &vframe_finished, p->packet);
+        avcodec_decode_video2(m.pCodecCtx, m.pFrame, &vframe_finished, m.packet);
         // Did we get a video frame?
         if(vframe_finished) {
-            ScaleYCbCrToRGB565(p->pFrame->data[0], p->pFrame->data[1], p->pFrame->data[2],
-                               (uint8_t*)lcd_fb_start, 0, 0,
-                               p->pCodecCtx->width, p->pCodecCtx->height, LCD_X_SIZE, LCD_Y_SIZE,
-                               p->pFrame->linesize[0], p->pFrame->linesize[1], 2*LCD_X_SIZE,
-                               (YUVType)p->pCodecCtx->pix_fmt, FILTER_BILINEAR);
+            ScaleYCbCrToRGB565(m.pFrame->data[0], m.pFrame->data[1], m.pFrame->data[2],
+                               (uint8_t*)lcd_fb_start,
+                               m.pCodecCtx->width, m.pCodecCtx->height, LCD_X_SIZE, LCD_Y_SIZE,
+                               m.pFrame->linesize[0], m.pFrame->linesize[1], 2*LCD_X_SIZE,
+                               (YUVType)m.pCodecCtx->pix_fmt);
     //        BSP_LCD_SetLayerAddress(0, (uint32_t)p->pFrame->data[1]);
             fps++;
         }
     }
-    if(p->pCodecCtx->codec_type == AVMEDIA_TYPE_AUDIO) {
+    if(m.pCodecCtx->codec_type == AVMEDIA_TYPE_AUDIO) {
         // Decode audio frame
-        while(avcodec_decode_audio4(p->pCodecCtx, &aframe, &aframe_finished, &apkt) > 0) {
+        while(avcodec_decode_audio4(m.pCodecCtx, &aframe, &aframe_finished, &apkt) > 0) {
             if(aframe_finished) {
-                size_t size = av_samples_get_buffer_size(NULL, p->pCodecCtx->channels,
-                        aframe.nb_samples, p->pCodecCtx->sample_fmt, 0);
+                size_t size = av_samples_get_buffer_size(NULL, m.pCodecCtx->channels,
+                        aframe.nb_samples, m.pCodecCtx->sample_fmt, 0);
 //                    uint8_t *audio_buf = memalign(4, size);
 //                    memcpy(audio_buf, aframe.data[0], size);
             }
         }
     }
-//next:
-    av_free_packet(p->packet);
-    free(p);
+    av_free_packet(m.packet);
+#endif // SDMMC_READ_SPEED
   }
 }
 
@@ -327,8 +332,6 @@ static int mount_sdcard()
     return -2;
   return 0;
 }
-
-//#define SDMMC_READ_SPEED
 
 static void reader_task_cb(void *arg)
 {
@@ -365,12 +368,12 @@ static void reader_task_cb(void *arg)
     printf("crc: %x\n", crc);
     free(buff);
 #else
-//    const char *filename = "test6.avi";
+    const char *filename = "test6.avi";
 //    const char *filename = "H264_test1_480x360.mp4";
 //    const char *filename = "MP4_640x360.mp4";
-    printf("\nEnter filename:\n");
-    char filename[64] = {0};
-    scanf("%s", filename);
+//    printf("\nEnter filename:\n");
+//    char filename[64] = {0};
+//    scanf("%s", filename);
     printf("Playing: %s\n", filename);
 
     AVFormatContext *pFormatCtx = NULL;
@@ -493,13 +496,18 @@ static void reader_task_cb(void *arg)
 
     while(av_read_frame(pFormatCtx, &packet)>=0) {
       // Is this a packet from the video stream?
-      if(packet.stream_index == videoStream) {
+//      if(packet.stream_index == videoStream)
+      {
 #if 1
         // Send to video task
-        av_queue_t *data = malloc(sizeof(*data));
-        data->pFrame = pFrame;
-        data->pCodecCtx = pCodecCtx;
-        data->packet = &packet;
+        av_queue_t data;
+        data.pFrame = pFrame;
+        if(packet.stream_index == videoStream) {
+          data.pCodecCtx = pCodecCtx;
+        } else if(packet.stream_index == audioStream) {
+          data.pCodecCtx = aCodecCtx;
+        }
+        data.packet = &packet;
         xQueueSendToBack(av_queue, &data, portMAX_DELAY);
 #else
         int frameFinished;
@@ -621,6 +629,42 @@ static void DMA2D_Config(int32_t x_size, int32_t x_size_orig, uint32_t ColorMode
   }
 }
 #endif
+/*
+typedef struct xTASK_PARAMETERS
+{
+    TaskFunction_t pvTaskCode;
+    const signed char * const pcName;
+    unsigned short usStackDepth;
+    void *pvParameters;
+    UBaseType_t uxPriority;
+    portSTACK_TYPE *puxStackBuffer;
+    MemoryRegion_t xRegions[ portNUM_CONFIGURABLE_REGIONS ];
+} TaskParameters_t;
+
+typedef struct xMEMORY_REGION
+{
+    void *pvBaseAddress;
+    unsigned long ulLengthInBytes;
+    unsigned long ulParameters;
+} MemoryRegion_t;
+*/
+TaskParameters_t av_task_param = {
+  .pvTaskCode = av_task_cb,
+  .pcName = "av_task",
+  .usStackDepth = AV_TASK_STACK,
+  .uxPriority = AV_TASK_PRIORITY,
+  .puxStackBuffer = av_task_stack,
+  .xRegions = {NULL}
+};
+
+TaskParameters_t reader_task_param = {
+  .pvTaskCode = reader_task_cb,
+  .pcName = "reader_task",
+  .usStackDepth = READER_TASK_STACK,
+  .uxPriority = READER_TASK_PRIORITY,
+  .puxStackBuffer = reader_task_stack,
+  .xRegions = {NULL}//(void*)0x20000000, 0x80000000, portMPU_REGION_READ_WRITE | portMPU_REGION_CACHEABLE}
+};
 
 int play_init(void)
 {
@@ -637,9 +681,10 @@ int play_init(void)
     BSP_LCD_SetLayerAddress(0, (uint32_t)lcd_fb_start);
 #endif
     // Create audio/video task
-    xTaskCreate(av_task_cb, "av_task", AV_TASK_STACK, NULL, AV_TASK_PRIORITY,
-                &av_task);
-    ASSERT(av_task);
+//    xTaskCreate(av_task_cb, "av_task", AV_TASK_STACK, NULL, AV_TASK_PRIORITY, &av_task);
+//    ASSERT(av_task);
+    xTaskCreateRestricted(&av_task_param, NULL);
+
 #if 0
     // Create LCD semaphore
     lcd_sema = xSemaphoreCreateBinary();
@@ -647,19 +692,20 @@ int play_init(void)
     xSemaphoreGive(lcd_sema);
 #endif
     // Create audio/video queue
-    av_queue = xQueueCreate(AV_QUEUE_LENGTH, sizeof(av_queue_t*));
+    av_queue = xQueueCreate(AV_QUEUE_LENGTH, sizeof(av_queue_t));
     ASSERT(av_queue);
 
     // Create reader task
-    xTaskCreate(reader_task_cb, "reader_task", READER_TASK_STACK, NULL, READER_TASK_PRIORITY,
-                &reader_task);
-    ASSERT(reader_task);
+//    xTaskCreate(reader_task_cb, "reader_task", READER_TASK_STACK, NULL, READER_TASK_PRIORITY,
+//                &reader_task);
+//    ASSERT(reader_task);
+    xTaskCreateRestricted(&reader_task_param, NULL);
 
     // Create audio task
 
     return 0;
 }
-
+#if 0
 void HAL_DMA2D_MspInit(DMA2D_HandleTypeDef *hdma2d)
 {
   __HAL_RCC_DMA2D_CLK_ENABLE();
@@ -667,3 +713,4 @@ void HAL_DMA2D_MspInit(DMA2D_HandleTypeDef *hdma2d)
   HAL_NVIC_SetPriority(DMA2D_IRQn, 15, 15);
   HAL_NVIC_EnableIRQ(DMA2D_IRQn);
 }
+#endif

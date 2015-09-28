@@ -30,9 +30,6 @@
 #include <signal.h>
 #include <stdint.h>
 
-#include "cmsis_os.h"
-#include "wrapper.h"
-
 #include "libavutil/avstring.h"
 #include "libavutil/colorspace.h"
 #include "libavutil/eval.h"
@@ -58,8 +55,8 @@
 # include "libavfilter/buffersrc.h"
 #endif
 
-//#include <SDL.h>
-//#include <SDL_thread.h>
+#include <SDL.h>
+#include <SDL_thread.h>
 
 #include "cmdutils.h"
 
@@ -1770,7 +1767,7 @@ static void alloc_picture(VideoState *is)
 
 static void duplicate_right_border_pixels(SDL_Overlay *bmp) {
     int i, width, height;
-    uint8_t *p, *maxp;
+    Uint8 *p, *maxp;
     for (i = 0; i < 3; i++) {
         width  = bmp->w;
         height = bmp->h;
@@ -2545,7 +2542,7 @@ static int audio_decode_frame(VideoState *is)
 }
 
 /* prepare a new audio buffer */
-static void sdl_audio_callback(void *opaque, uint8_t *stream, int len)
+static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
 {
     VideoState *is = opaque;
     int audio_size, len1;

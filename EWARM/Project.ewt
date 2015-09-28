@@ -2233,7 +2233,7 @@
       <group>
         <name>Utilities</name>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Utilities\CPU\cpu_utils.c</name>
+          <name>$PROJ_DIR$\..\Utilities\CPU\cpu_utils.c</name>
         </file>
       </group>
     </group>
@@ -2245,34 +2245,34 @@
       <group>
         <name>Component</name>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Drivers\BSP\Components\ft5336\ft5336.c</name>
+          <name>$PROJ_DIR$\..\Drivers\BSP\Components\ft5336\ft5336.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Drivers\BSP\Components\wm8994\wm8994.c</name>
+          <name>$PROJ_DIR$\..\Drivers\BSP\Components\wm8994\wm8994.c</name>
         </file>
       </group>
       <group>
         <name>STM32746G_DISCO</name>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Drivers\BSP\STM32746G-Discovery\stm32746g_discovery.c</name>
+          <name>$PROJ_DIR$\..\Drivers\BSP\STM32746G-Discovery\stm32746g_discovery.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Drivers\BSP\STM32746G-Discovery\stm32746g_discovery_audio.c</name>
+          <name>$PROJ_DIR$\..\Drivers\BSP\STM32746G-Discovery\stm32746g_discovery_audio.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Drivers\BSP\STM32746G-Discovery\stm32746g_discovery_lcd.c</name>
+          <name>$PROJ_DIR$\..\Drivers\BSP\STM32746G-Discovery\stm32746g_discovery_lcd.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Drivers\BSP\STM32746G-Discovery\stm32746g_discovery_qspi.c</name>
+          <name>$PROJ_DIR$\..\Drivers\BSP\STM32746G-Discovery\stm32746g_discovery_qspi.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Drivers\BSP\STM32746G-Discovery\stm32746g_discovery_sd.c</name>
+          <name>$PROJ_DIR$\..\Drivers\BSP\STM32746G-Discovery\stm32746g_discovery_sd.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Drivers\BSP\STM32746G-Discovery\stm32746g_discovery_sdram.c</name>
+          <name>$PROJ_DIR$\..\Drivers\BSP\STM32746G-Discovery\stm32746g_discovery_sdram.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Drivers\BSP\STM32746G-Discovery\stm32746g_discovery_ts.c</name>
+          <name>$PROJ_DIR$\..\Drivers\BSP\STM32746G-Discovery\stm32746g_discovery_ts.c</name>
         </file>
       </group>
     </group>
@@ -2285,181 +2285,181 @@
     <group>
       <name>STM32F4xx_HAL_Drivers</name>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_adc.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_adc.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_adc_ex.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_adc_ex.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_can.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_can.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_cec.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_cec.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_cortex.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_cortex.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_crc.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_crc.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_crc_ex.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_crc_ex.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_cryp.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_cryp.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_cryp_ex.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_cryp_ex.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_dac.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_dac.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_dac_ex.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_dac_ex.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_dcmi.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_dcmi.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_dma.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_dma.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_dma2d.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_dma2d.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_dma_ex.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_dma_ex.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_eth.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_eth.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_flash.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_flash.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_flash_ex.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_flash_ex.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_gpio.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_gpio.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_hash.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_hash.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_hash_ex.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_hash_ex.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_hcd.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_hcd.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_i2c.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_i2c.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_i2c_ex.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_i2c_ex.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_i2s.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_i2s.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_irda.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_irda.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_iwdg.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_iwdg.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_lptim.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_lptim.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_ltdc.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_ltdc.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_msp_template.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_msp_template.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_nor.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_nor.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_pcd.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_pcd.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_pcd_ex.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_pcd_ex.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_pwr.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_pwr.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_pwr_ex.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_pwr_ex.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_qspi.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_qspi.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_rcc.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_rcc.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_rcc_ex.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_rcc_ex.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_rng.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_rng.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_rtc.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_rtc.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_rtc_ex.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_rtc_ex.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_sai.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_sai.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_sai_ex.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_sai_ex.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_sd.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_sd.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_sdram.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_sdram.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_smartcard.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_smartcard.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_smartcard_ex.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_smartcard_ex.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_spdifrx.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_spdifrx.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_spi.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_spi.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_sram.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_sram.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_tim.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_tim.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_tim_ex.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_tim_ex.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_uart.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_uart.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_usart.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_usart.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_wwdg.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_wwdg.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_ll_fmc.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_ll_fmc.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_ll_sdmmc.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_ll_sdmmc.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_ll_usb.c</name>
+        <name>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Src\stm32f7xx_ll_usb.c</name>
       </file>
     </group>
   </group>
@@ -2494,31 +2494,31 @@
       <group>
         <name>Core</name>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\FatFs\src\diskio.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\FatFs\src\diskio.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\FatFs\src\ff.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\FatFs\src\ff.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\FatFs\src\ff_gen_drv.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\FatFs\src\ff_gen_drv.c</name>
         </file>
       </group>
       <group>
         <name>Drivers</name>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\FatFs\src\drivers\sd_diskio.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\FatFs\src\drivers\sd_diskio.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\FatFs\src\drivers\usbh_diskio.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\FatFs\src\drivers\usbh_diskio.c</name>
         </file>
       </group>
       <group>
         <name>Options</name>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\FatFs\src\option\syscall.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\FatFs\src\option\syscall.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\FatFs\src\option\unicode.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\FatFs\src\option\unicode.c</name>
         </file>
       </group>
     </group>
@@ -2527,35 +2527,41 @@
       <group>
         <name>Portable</name>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\FreeRTOS\Source\CMSIS_RTOS\cmsis_os.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\CMSIS_RTOS\cmsis_os.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\FreeRTOS\Source\portable\MemMang\heap_4.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\portable\MemMang\heap_4.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\FreeRTOS\Source\portable\IAR\ARM_CM7\r0p1\port.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\portable\IAR\ARM_CM7\r0p1\port.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\FreeRTOS\Source\portable\IAR\ARM_CM7\r0p1\portasm.s</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\portable\GCC\ARM_CM3_MPU\port.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\portable\IAR\ARM_CM7\r0p1\portasm.s</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\portable\GCC\ARM_CM3_MPU\portmacro.h</name>
         </file>
       </group>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\FreeRTOS\Source\croutine.c</name>
+        <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\croutine.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\FreeRTOS\Source\event_groups.c</name>
+        <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\event_groups.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\FreeRTOS\Source\list.c</name>
+        <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\list.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\FreeRTOS\Source\queue.c</name>
+        <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\queue.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\FreeRTOS\Source\tasks.c</name>
+        <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\tasks.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\FreeRTOS\Source\timers.c</name>
+        <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\timers.c</name>
       </file>
     </group>
     <group>
@@ -2563,28 +2569,28 @@
       <group>
         <name>Api</name>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\api\api_lib.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\api\api_lib.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\api\api_msg.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\api\api_msg.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\api\err.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\api\err.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\api\netbuf.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\api\netbuf.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\api\netdb.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\api\netdb.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\api\netifapi.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\api\netifapi.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\api\sockets.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\api\sockets.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\api\tcpip.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\api\tcpip.c</name>
         </file>
       </group>
       <group>
@@ -2592,86 +2598,86 @@
         <group>
           <name>IPv4</name>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\core\ipv4\autoip.c</name>
+            <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\core\ipv4\autoip.c</name>
           </file>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\core\ipv4\icmp.c</name>
+            <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\core\ipv4\icmp.c</name>
           </file>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\core\ipv4\igmp.c</name>
+            <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\core\ipv4\igmp.c</name>
           </file>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\core\ipv4\inet.c</name>
+            <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\core\ipv4\inet.c</name>
           </file>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\core\ipv4\inet_chksum.c</name>
+            <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\core\ipv4\inet_chksum.c</name>
           </file>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\core\ipv4\ip.c</name>
+            <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\core\ipv4\ip.c</name>
           </file>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\core\ipv4\ip_addr.c</name>
+            <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\core\ipv4\ip_addr.c</name>
           </file>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\core\ipv4\ip_frag.c</name>
+            <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\core\ipv4\ip_frag.c</name>
           </file>
         </group>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\core\def.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\core\def.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\core\dhcp.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\core\dhcp.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\core\dns.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\core\dns.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\core\init.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\core\init.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\core\lwip_timers.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\core\lwip_timers.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\core\mem.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\core\mem.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\core\memp.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\core\memp.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\core\netif.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\core\netif.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\core\pbuf.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\core\pbuf.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\core\raw.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\core\raw.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\core\stats.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\core\stats.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\core\sys.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\core\sys.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\core\tcp.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\core\tcp.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\core\tcp_in.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\core\tcp_in.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\core\tcp_out.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\core\tcp_out.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\core\udp.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\core\udp.c</name>
         </file>
       </group>
       <group>
         <name>Netif</name>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\src\netif\etharp.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\netif\etharp.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\Third_Party\LwIP\system\OS\sys_arch.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\system\OS\sys_arch.c</name>
         </file>
       </group>
     </group>
@@ -2689,13 +2695,13 @@
       <group>
         <name>Library</name>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\ST\STemWin\Lib\STemWin528_CM7_OS_IAR_ot.a</name>
+          <name>$PROJ_DIR$\..\Middlewares\ST\STemWin\Lib\STemWin528_CM7_OS_IAR_ot.a</name>
         </file>
       </group>
       <group>
         <name>OS</name>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\ST\STemWin\OS\GUI_X_OS.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\ST\STemWin\OS\GUI_X_OS.c</name>
         </file>
       </group>
       <group>
@@ -2712,13 +2718,13 @@
         <group>
           <name>MSC</name>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Src\usbh_msc.c</name>
+            <name>$PROJ_DIR$\..\Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Src\usbh_msc.c</name>
           </file>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Src\usbh_msc_bot.c</name>
+            <name>$PROJ_DIR$\..\Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Src\usbh_msc_bot.c</name>
           </file>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Src\usbh_msc_scsi.c</name>
+            <name>$PROJ_DIR$\..\Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Src\usbh_msc_scsi.c</name>
           </file>
         </group>
       </group>
@@ -2731,16 +2737,16 @@
       <group>
         <name>Core</name>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Core\Src\usbh_core.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\ST\STM32_USB_Host_Library\Core\Src\usbh_core.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Core\Src\usbh_ctlreq.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\ST\STM32_USB_Host_Library\Core\Src\usbh_ctlreq.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Core\Src\usbh_ioreq.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\ST\STM32_USB_Host_Library\Core\Src\usbh_ioreq.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Core\Src\usbh_pipes.c</name>
+          <name>$PROJ_DIR$\..\Middlewares\ST\STM32_USB_Host_Library\Core\Src\usbh_pipes.c</name>
         </file>
       </group>
     </group>

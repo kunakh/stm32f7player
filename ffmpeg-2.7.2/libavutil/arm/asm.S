@@ -43,14 +43,14 @@
 #if   HAVE_NEON
         .arch           armv7-a
 #elif HAVE_ARMV6T2
-;        .arch           armv6t2
+        .arch           armv6t2
 #elif HAVE_ARMV6
         .arch           armv6
 #elif HAVE_ARMV5TE
         .arch           armv5te
 #endif
 #if   HAVE_AS_OBJECT_ARCH
-;ELF     .object_arch    armv4
+ELF     .object_arch    armv7e-m
 #endif
 
 #if   HAVE_NEON
@@ -58,14 +58,14 @@
 ELF     .eabi_attribute 10, 0           @ suppress Tag_FP_arch
 ELF     .eabi_attribute 12, 0           @ suppress Tag_Advanced_SIMD_arch
 #elif HAVE_VFP
-;        .fpu            vfp
-;ELF     .eabi_attribute 10, 0           @ suppress Tag_FP_arch
+        .fpu            vfp
+ELF     .eabi_attribute 10, 0           @ suppress Tag_FP_arch
 #endif
 
-;        .syntax unified
-;T       .thumb
-;ELF     .eabi_attribute 25, 1           @ Tag_ABI_align_preserved
-;ELF     .section .note.GNU-stack,"",%progbits @ Mark stack as non-executable
+        .syntax unified
+T       .thumb
+ELF     .eabi_attribute 25, 1           @ Tag_ABI_align_preserved
+ELF     .section .note.GNU-stack,"",%progbits @ Mark stack as non-executable
 
 .macro  function name, export=0, align=2
         .set            .Lpic_idx, 0
