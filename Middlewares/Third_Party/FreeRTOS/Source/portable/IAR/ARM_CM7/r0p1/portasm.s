@@ -151,6 +151,11 @@ vPortSVCHandler:
 	ldr r1, [r3]
 	ldr r0, [r1]
 
+	add r1, r1, #4          /* Move onto the second item in the TCB... */
+	ldr r2, =0xe000ed9c		/* Region Base Address register. */
+	ldmia r1!, {r4-r5}		/* Read 1 set of MPU registers. */
+	stmia r2!, {r4-r5}		/* Write 1 set of MPU registers. */
+
 	/* Pop the core registers. */
 	ldmia r0!, {r4-r11, r14}
 	msr psp, r0

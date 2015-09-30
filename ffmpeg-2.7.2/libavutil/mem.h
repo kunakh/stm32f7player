@@ -80,10 +80,12 @@
  * be allocated.
  * @see av_mallocz()
  */
-//void *av_malloc(size_t size) av_malloc_attrib av_alloc_size(1);
-extern void *memalign(size_t, size_t);
-#define av_malloc(size) ({void *__p = memalign(4, size); if(!__p) printf("[%s:%d] Failed to allocate %d bytes in %s()\n", __FILE__, __LINE__,size,__FUNCTION__);__p;})
- 
+#if 1
+    void *av_malloc(size_t size) av_malloc_attrib av_alloc_size(1);
+#else
+    extern void *memalign(size_t, size_t);
+    #define av_malloc(size) ({void *__p = memalign(4, size); if(!__p) printf("[%s:%d] Failed to allocate %d bytes in %s()\n", __FILE__, __LINE__,size,__FUNCTION__);__p;})
+#endif
 /**
  * Allocate a block of size * nmemb bytes with av_malloc().
  * @param nmemb Number of elements

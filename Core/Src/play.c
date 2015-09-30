@@ -335,6 +335,8 @@ static int mount_sdcard()
 
 static void reader_task_cb(void *arg)
 {
+  int count = 0;
+
   while(1) {
 #ifdef SDMMC_READ_SPEED
     mount_sdcard();
@@ -368,7 +370,12 @@ static void reader_task_cb(void *arg)
     printf("crc: %x\n", crc);
     free(buff);
 #else
-    const char *filename = "test6.avi";
+    const char *filenames[3] = {"test6.avi", "H264_test1_480x360.mp4", "MP4_640x360.mp4"};
+    const char *filename = filenames[count++];
+    if (count > 2)
+      count = 0;
+
+//    const char *filename = "test6.avi";
 //    const char *filename = "H264_test1_480x360.mp4";
 //    const char *filename = "MP4_640x360.mp4";
 //    printf("\nEnter filename:\n");
@@ -377,6 +384,7 @@ static void reader_task_cb(void *arg)
     printf("Playing: %s\n", filename);
 
     AVFormatContext *pFormatCtx = NULL;
+
     av_log_set_callback(&log_cb);
     av_register_all();
 

@@ -716,7 +716,7 @@ static void prvSetupMPU( void )
 										( portMPU_REGION_CACHEABLE ) |
 										( prvGetMPURegionSizeSetting( ( uint32_t ) __ICFEDIT_region_SDRAM_end__ - ( uint32_t ) __ICFEDIT_region_SDRAM_start__ ) ) |
 										( portMPU_REGION_ENABLE );
-
+#if 1
         /* Setup IRAM */
         *portMPU_REGION_BASE_ADDRESS =	( ( uint32_t ) __ICFEDIT_region_IRAM_start__ ) |
 										( portMPU_REGION_VALID ) |
@@ -726,6 +726,7 @@ static void prvSetupMPU( void )
 										( portMPU_REGION_CACHEABLE ) |
 										( prvGetMPURegionSizeSetting( ( uint32_t ) __ICFEDIT_region_IRAM_end__ - ( uint32_t ) __ICFEDIT_region_IRAM_start__ ) ) |
 										( portMPU_REGION_ENABLE );
+#endif
 #ifdef PRIVILEGED_REGIONS
 		/* Setup the first 16K for privileged only access (even though less
 		than 10K is actually being used).  This is where the kernel code is
@@ -756,7 +757,7 @@ static void prvSetupMPU( void )
 										( portMPU_REGION_VALID ) |
 										( portGENERAL_PERIPHERALS_REGION );
 
-		*portMPU_REGION_ATTRIBUTE =		( portMPU_REGION_READ_WRITE/* | portMPU_REGION_EXECUTE_NEVER */) |
+		*portMPU_REGION_ATTRIBUTE =		( portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER ) |
 										( prvGetMPURegionSizeSetting( portPERIPHERALS_END_ADDRESS - portPERIPHERALS_START_ADDRESS ) ) |
 										( portMPU_REGION_ENABLE );
 
@@ -771,6 +772,7 @@ static void prvSetupMPU( void )
 
 void vPortStoreTaskMPUSettings( xMPU_SETTINGS *xMPUSettings, const struct xMEMORY_REGION * const xRegions, StackType_t *pxBottomOfStack, uint16_t usStackDepth )
 {
+#if 0
     extern uint32_t __ICFEDIT_region_IROM_start__[];
     extern uint32_t __ICFEDIT_region_IROM_end__[];
     extern uint32_t __ICFEDIT_region_QSPI_start__[];
@@ -782,7 +784,7 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS *xMPUSettings, const struct xMEMOR
 
     int32_t lIndex;
     uint32_t ul;
-#if 0
+
 	if( xRegions == NULL )
 	{
 		/* No MPU regions are specified so allow access to all RAM. */

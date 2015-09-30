@@ -12,14 +12,14 @@ ByteLimit=50
 stlinkserialNo=114C5BB8
 stlinkfoundProbes=
 [DebugChecksum]
-Checksum=135384307
+Checksum=-1460979046
 [Exceptions]
 StopOnUncaught=_ 0
 StopOnThrow=_ 0
 [CodeCoverage]
 Enabled=_ 0
 [CallStack]
-ShowArgs=0
+ShowArgs=1
 [Disassembly]
 MixedMode=1
 [SWOTraceHWSettings]
@@ -72,6 +72,16 @@ ShowTimeLog=1
 SumEnabled=0
 ShowTimeSum=1
 SumSortOrder=0
+[Disassemble mode]
+mode=0
+[Breakpoints2]
+Bp0=_ 0 "EMUL_CODE" "0x0800A350" 0 0 1 "" 0 "" 0
+Bp1=_ 0 "EMUL_CODE" "0x08012EDA" 0 0 1 "" 0 "" 0
+Bp2=_ 0 "EMUL_CODE" "0x9050E94C" 0 0 1 "" 0 "" 0
+Bp3=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\play.c}.680.5" 0 0 1 "" 0 "" 0
+Bp4=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\play.c}.710.5" 0 0 1 "" 0 "" 0
+Bp5=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\play.c}.384.5" 0 0 1 "" 0 "" 0
+Count=6
 [Log file]
 LoggingEnabled=_ 0
 LogFile=_ ""
@@ -79,6 +89,9 @@ Category=_ 0
 [TermIOLog]
 LoggingEnabled=_ 0
 LogFile=_ ""
+[Aliases]
+Count=0
+SuppressDialog=0
 [DriverProfiling]
 Enabled=1
 Mode=3
@@ -89,14 +102,3 @@ Exclusions=
 Enabled=0
 [CallStackStripe]
 ShowTiming=1
-[Disassemble mode]
-mode=0
-[Breakpoints2]
-Bp0=_ 0 "EMUL_CODE" "0x0800A350" 0 0 1 "" 0 "" 0
-Bp1=_ 0 "EMUL_CODE" "0x08012EDA" 0 0 1 "" 0 "" 0
-Bp2=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\play.c}.702.5" 0 0 1 "" 0 "" 0
-Bp3=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\play.c}.399.5" 0 0 1 "" 0 "" 0
-Count=4
-[Aliases]
-Count=0
-SuppressDialog=0
