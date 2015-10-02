@@ -106,6 +106,7 @@
 
 /* Constants required to access and manipulate the MPU. */
 #define portMPU_TYPE							( ( volatile uint32_t * ) 0xe000ed90 )
+#define portMPU_REGION_NUMBER					( ( volatile uint32_t * ) 0xe000ed98 )
 #define portMPU_REGION_BASE_ADDRESS				( ( volatile uint32_t * ) 0xe000ed9C )
 #define portMPU_REGION_ATTRIBUTE				( ( volatile uint32_t * ) 0xe000edA0 )
 #define portMPU_CTRL							( ( volatile uint32_t * ) 0xe000ed94 )
@@ -688,6 +689,7 @@ static void prvSetupMPU( void )
 	if( *portMPU_TYPE == portEXPECTED_MPU_TYPE_VALUE )
 	{
 		/* Setup QSPI */
+        *portMPU_REGION_NUMBER = portUNPRIVILEGED_FLASH_REGION;
         *portMPU_REGION_BASE_ADDRESS =	( ( uint32_t ) __ICFEDIT_region_QSPI_start__ ) |
 										( portMPU_REGION_VALID ) |
 										( portUNPRIVILEGED_FLASH_REGION );
@@ -698,6 +700,7 @@ static void prvSetupMPU( void )
 										( portMPU_REGION_ENABLE );
 
         /* Setup IROM */
+        *portMPU_REGION_NUMBER = portPRIVILEGED_FLASH_REGION;
         *portMPU_REGION_BASE_ADDRESS =	( ( uint32_t ) __ICFEDIT_region_IROM_start__ ) |
 										( portMPU_REGION_VALID ) |
 										( portPRIVILEGED_FLASH_REGION );
@@ -708,6 +711,7 @@ static void prvSetupMPU( void )
 										( portMPU_REGION_ENABLE );
 
         /* Setup SDRAM */
+        *portMPU_REGION_NUMBER = portPRIVILEGED_RAM_REGION;
         *portMPU_REGION_BASE_ADDRESS =	( ( uint32_t ) __ICFEDIT_region_SDRAM_start__ ) |
 										( portMPU_REGION_VALID ) |
 										( portPRIVILEGED_RAM_REGION );
@@ -718,6 +722,7 @@ static void prvSetupMPU( void )
 										( portMPU_REGION_ENABLE );
 #if 1
         /* Setup IRAM */
+        *portMPU_REGION_NUMBER = portPRIVILEGED_STACK_REGION;
         *portMPU_REGION_BASE_ADDRESS =	( ( uint32_t ) __ICFEDIT_region_IRAM_start__ ) |
 										( portMPU_REGION_VALID ) |
 										( portPRIVILEGED_STACK_REGION );
@@ -753,6 +758,7 @@ static void prvSetupMPU( void )
 #endif // PRIVILEGED_REGIONS
 		/* By default allow everything to access the general peripherals.  The
 		system peripherals and registers are protected. */
+        *portMPU_REGION_NUMBER = portGENERAL_PERIPHERALS_REGION;
 		*portMPU_REGION_BASE_ADDRESS =	( portPERIPHERALS_START_ADDRESS ) |
 										( portMPU_REGION_VALID ) |
 										( portGENERAL_PERIPHERALS_REGION );
@@ -760,6 +766,9 @@ static void prvSetupMPU( void )
 		*portMPU_REGION_ATTRIBUTE =		( portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER ) |
 										( prvGetMPURegionSizeSetting( portPERIPHERALS_END_ADDRESS - portPERIPHERALS_START_ADDRESS ) ) |
 										( portMPU_REGION_ENABLE );
+
+        /* Set region number to user stack */
+        *portMPU_REGION_NUMBER = portSTACK_REGION;
 
 		/* Enable the memory fault exception. */
 		*portNVIC_SYS_CTRL_STATE |= portNVIC_MEM_FAULT_ENABLE;
