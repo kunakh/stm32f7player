@@ -264,7 +264,7 @@ static inline void ScaleYCbCr42xToRGB565_Nearest_Row_C(
 
 static inline void ScaleYCbCr42xToRGB565_Nearest_Row_SIMD(
     uint16_t *rgb_row, const uint8_t *y_row, const uint8_t *u_row, const uint8_t *v_row,
-    int width, int source_x0_q16, int source_dx_q16, int source_uv_xoffs_q16) {
+    int width, int source_x0_q16, int source_dx_q16) {
 
 __asm__ volatile (
 "MOV     r11, #74                                                                                 \n"
@@ -272,8 +272,7 @@ __asm__ volatile (
 "Nearest_Row_SIMD:                                                                                \n"
 "ADD     r7, %[x1], %[x5], LSR #16                                                                \n"
 "LDRB    r8, [r7]                @ y = ctx->y_row[source_x] : even pixel                          \n"
-"ADD     r7, %[x5], %[x7]        @ source_x_q16+ctx->source_uv_xoffs_q16                          \n"
-"LSR     r7, r7, #17             @ source_x = (source_x_q16+ctx->source_uv_xoffs_q16)>>17         \n"
+"LSR     r7, %[x5], #17          @ source_x = source_x_q16>>17                                    \n"
 "LDRB    r9, [%[x2], r7]         @ u = ctx->u_row[source_x]                                       \n"
 "LDRB    r10, [%[x3], r7]        @ v = ctx->v_row[source_x]                                       \n"
 "ADD     %[x5], %[x6]            @ source_x_q16 += ctx->source_dx_q16                             \n"
@@ -297,8 +296,7 @@ __asm__ volatile (
 "STRH.W  r10, [%[x0]], #2        @ ctx->rgb_row[x] = yu2rgb565(y, u, v, 0)                        \n"
 "ADD     r7, %[x1], %[x5], LSR #16                                                                \n"
 "LDRB    r8, [r7]                @ y = ctx->y_row[source_x] : even pixel                          \n"
-"ADD     r7, %[x5], %[x7]        @ source_x_q16+ctx->source_uv_xoffs_q16                          \n"
-"LSR     r7, r7, #17             @ source_x = (source_x_q16+ctx->source_uv_xoffs_q16)>>17         \n"
+"LSR     r7, %[x5], #17          @ source_x = source_x_q16>>17                                    \n"
 "LDRB    r9, [%[x2], r7]         @ u = ctx->u_row[source_x]                                       \n"
 "LDRB    r10, [%[x3], r7]        @ v = ctx->v_row[source_x]                                       \n"
 "ADD     %[x5], %[x6]            @ source_x_q16 += ctx->source_dx_q16                             \n"
@@ -331,7 +329,6 @@ __asm__ volatile (
 :
     [x4]"r"(width),
     [x6]"r"(source_dx_q16),
-    [x7]"r"(source_uv_xoffs_q16),
     [x8] "i"(DITHER_BIAS[0][0]),
     [x9] "i"(DITHER_BIAS[0][1]),
     [x10]"i"(DITHER_BIAS[0][2]),
@@ -339,6 +336,72 @@ __asm__ volatile (
     [x12]"i"(DITHER_BIAS[3][1]),
     [x13]"i"(DITHER_BIAS[3][2])
 :   "cc", "memory", "r7", "r8", "r9", "r10", "r11", "r12");
+}
+
+/*Nearest-neighbor scaling.*/
+void ScaleYUV2RGB565(const uint8_t *y_buf,
+                     const uint8_t *u_buf,
+                     const uint8_t *v_buf,
+                     uint8_t       *rgb_buf,
+                     int source_width,
+                     int source_height,
+                     int width,
+                     int height,
+                     int y_pitch,
+                     int uv_pitch,
+                     int rgb_pitch,
+                     YUVType yuv_type) {
+  int source_x0_q16;
+  int source_y0_q16;
+  int source_dx_q16;
+  int source_dy_q16;
+  int y_shift;
+  int ymax;
+  int uvmax;
+  const uint8_t *y_row, *u_row, *v_row;
+
+  source_dx_q16 = (source_width<<16) / width;
+  source_x0_q16 = (source_dx_q16>>1);
+  source_dy_q16 = (source_height<<16) / height;
+  source_y0_q16 = (source_dy_q16>>1);
+  y_shift = (yuv_type == YV12);
+
+  ymax = source_height-1;
+  uvmax = ((ymax+1+y_shift)>>y_shift)-1;
+
+  for(int y = 0; y < height; y++) {
+    int source_y;
+    uint16_t *rgb_row = (uint16_t *)(rgb_buf + y*rgb_pitch);
+    source_y = source_y0_q16>>16;
+    source_y = clamped(source_y, 0, ymax);
+    y_row = y_buf + source_y*y_pitch;
+    source_y = (source_y0_q16)>>(16+y_shift);
+    source_y = clamped(source_y, 0, uvmax);
+    source_y0_q16 += source_dy_q16;
+    u_row = u_buf + source_y*uv_pitch;
+    v_row = v_buf + source_y*uv_pitch;
+#if 0
+__asm__ volatile (
+"LDR    %[rgb_row], %[rgb_buf]              \n"
+"LDR    r7, %[rgb_pitch]                    \n"
+"MLA    %[rgb_row], %[y], r7, %[rgb_row]    \n"
+
+:
+    [rgb_row]               "+r"(rgb_row),
+    [y_row]                 "+r"(y_row),
+    [u_row]                 "+r"(u_row),
+    [v_row]                 "+r"(v_row),
+    [source_x0_q16]         "+r"(source_x0_q16)
+    [width]                 "+r"(width),
+    [source_dx_q16]         "+r"(source_dx_q16),
+    [source_uv_xoffs_q16]   "+r"(source_uv_xoffs_q16)
+:
+    
+:   "cc", "memory", "r7", "r8", "r9", "r10");
+#endif
+    ScaleYCbCr42xToRGB565_Nearest_Row_SIMD(
+        rgb_row, y_row, u_row, v_row, width, source_x0_q16, source_dx_q16);
+  }
 }
 
 static inline void ScaleYCbCr444ToRGB565_Nearest_Row_C(
@@ -481,66 +544,6 @@ __asm__ volatile (
 :   "cc", "memory", "r7", "r8", "r9", "r10", "r11");
 }
 
-void ScaleYUV2RGB565(const uint8_t *y_buf,
-                     const uint8_t *u_buf,
-                     const uint8_t *v_buf,
-                     uint8_t *rgb_buf,
-                     int source_width,
-                     int source_height,
-                     int width,
-                     int height,
-                     int y_pitch,
-                     int uv_pitch,
-                     int rgb_pitch,
-                     YUVType yuv_type) {
-  int source_x0_q16;
-  int source_y0_q16;
-  int source_dx_q16;
-  int source_dy_q16;
-  int source_uv_xoffs_q16;
-  int source_uv_yoffs_q16;
-  int x_shift;
-  int y_shift;
-  int ymax;
-  int uvmax;
-
-  const uint8_t *y_row, *u_row, *v_row;
-
-  source_dx_q16 = (source_width<<16) / width;
-  source_x0_q16 = (source_dx_q16>>1);
-  source_dy_q16 = (source_height<<16) / height;
-  source_y0_q16 = (source_dy_q16>>1);
-  x_shift = (yuv_type != YV24);
-  y_shift = (yuv_type == YV12);
-
-  source_uv_xoffs_q16 = -(x_shift<<15);
-  source_uv_yoffs_q16 = -(y_shift<<15);
-  ymax = source_height-1;
-  uvmax = ((ymax+1+y_shift)>>y_shift)-1;
-
-  /*Nearest-neighbor scaling.*/
-  
-  /*Add rounding offsets once, in advance.*/
-  source_uv_xoffs_q16 += (x_shift<<15);
-  source_uv_yoffs_q16 += (y_shift<<15);
-
-  for(int y=0; y<height; y++) {
-    int source_y;
-    uint16_t *rgb_row = (uint16_t *)(rgb_buf + y*rgb_pitch);
-    source_y = source_y0_q16>>16;
-    source_y = clamped(source_y, 0, ymax);
-    y_row = y_buf + source_y*y_pitch;
-    source_y = (source_y0_q16+source_uv_yoffs_q16)>>(16+y_shift);
-    source_y = clamped(source_y, 0, uvmax);
-    source_y0_q16 += source_dy_q16;
-    u_row = u_buf + source_y*uv_pitch;
-    v_row = v_buf + source_y*uv_pitch;
-
-    ScaleYCbCr42xToRGB565_Nearest_Row_SIMD(
-        rgb_row, y_row, u_row, v_row, width, source_x0_q16, source_dx_q16, source_uv_xoffs_q16);
-  }
-}
-  
 void ScaleYCbCrToRGB565(const uint8_t *y_buf,
                         const uint8_t *u_buf,
                         const uint8_t *v_buf,

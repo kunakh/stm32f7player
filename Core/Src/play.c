@@ -370,7 +370,7 @@ static void reader_task_cb(void *arg)
     printf("crc: %x\n", crc);
     free(buff);
 #else
-    const char *filenames[3] = {"MP4_640x360.mp4", "test6.avi", "H264_test1_480x360.mp4"};
+    const char *filenames[3] = {"test6.avi", "H264_test1_480x360.mp4", "MP4_640x360.mp4"};
     const char *filename = filenames[count++];
     if (count > 2)
       count = 0;
