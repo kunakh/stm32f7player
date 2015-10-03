@@ -36,7 +36,7 @@
 #include "cmdutils.h"
 #include <assert.h>
 
-#include "swscale.h"
+#include "scale.h"
 
 #define LCD_X_SIZE          RK043FN48H_WIDTH
 #define LCD_Y_SIZE          RK043FN48H_HEIGHT
@@ -47,7 +47,7 @@
 #define AV_QUEUE_LENGTH    16
 
 #define READER_TASK_PRIORITY  5
-#define READER_TASK_STACK     (5*1024)
+#define READER_TASK_STACK     (10*1024)
 
 #pragma location = "__iram"
 #pragma data_alignment=32
@@ -284,11 +284,11 @@ static void av_task_cb(void *arg)
         avcodec_decode_video2(m.pCodecCtx, m.pFrame, &vframe_finished, m.packet);
         // Did we get a video frame?
         if(vframe_finished) {
-            ScaleYCbCrToRGB565(m.pFrame->data[0], m.pFrame->data[1], m.pFrame->data[2],
-                               (uint8_t*)lcd_fb_start,
-                               m.pCodecCtx->width, m.pCodecCtx->height, LCD_X_SIZE, LCD_Y_SIZE,
-                               m.pFrame->linesize[0], m.pFrame->linesize[1], 2*LCD_X_SIZE,
-                               (YUVType)m.pCodecCtx->pix_fmt);
+            ScaleYUV2RGB565(m.pFrame->data[0], m.pFrame->data[1], m.pFrame->data[2],
+                            (uint8_t*)lcd_fb_start,
+                            m.pCodecCtx->width, m.pCodecCtx->height, LCD_X_SIZE, LCD_Y_SIZE,
+                            m.pFrame->linesize[0], m.pFrame->linesize[1], 2*LCD_X_SIZE,
+                            (YUVType)m.pCodecCtx->pix_fmt);
     //        BSP_LCD_SetLayerAddress(0, (uint32_t)p->pFrame->data[1]);
             fps++;
         }
@@ -370,7 +370,7 @@ static void reader_task_cb(void *arg)
     printf("crc: %x\n", crc);
     free(buff);
 #else
-    const char *filenames[3] = {"test6.avi", "H264_test1_480x360.mp4", "MP4_640x360.mp4"};
+    const char *filenames[3] = {"MP4_640x360.mp4", "test6.avi", "H264_test1_480x360.mp4"};
     const char *filename = filenames[count++];
     if (count > 2)
       count = 0;

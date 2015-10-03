@@ -1,5 +1,5 @@
-#ifndef __SWSCALE_H__
-#define __SWSCALE_H__
+#ifndef __SCALE_H__
+#define __SCALE_H__
 
 typedef enum {
   YV12 = 0,           // YV12 is half width and half height chroma channels.
@@ -25,5 +25,19 @@ void ScaleYCbCrToRGB565(const uint8_t *y_buf,
                         int y_pitch,
                         int uv_pitch,
                         int rgb_pitch,
-                        YUVType yuv_type);
-#endif // __SWSCALE_H__
+                        YUVType yuv_type,
+                        ScaleFilter filter);
+
+void ScaleYUV2RGB565(const uint8_t *y_buf,
+                     const uint8_t *u_buf,
+                     const uint8_t *v_buf,
+                     uint8_t *rgb_buf,
+                     int source_width,
+                     int source_height,
+                     int width,
+                     int height,
+                     int y_pitch,
+                     int uv_pitch,
+                     int rgb_pitch,
+                     YUVType yuv_type);
+#endif // __SCALE_H__
