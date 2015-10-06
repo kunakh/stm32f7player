@@ -44,41 +44,44 @@
 #define LCD_Y_SIZE          RK043FN48H_HEIGHT
 #define FRAME_BUFFER_SIZE   (LCD_X_SIZE * LCD_Y_SIZE * 2) // rgb565
 
-#define AV_TASK_STACK      (10*1024)
-#define AV_TASK_PRIORITY   7
-#define AV_QUEUE_LENGTH    16
+//#define AV_TASK_STACK      (10*1024)
+//#define AV_TASK_PRIORITY   7
+//#define AV_QUEUE_LENGTH    16
 
 #define READER_TASK_PRIORITY  5
 #define READER_TASK_STACK     (10*1024)
 
-#define AUDIO_QUEUE_LENGTH    128
+#define AUDIO_TASK_STACK      (256)
+#define AUDIO_TASK_PRIORITY   7
+#define VIDEO_TASK_STACK      (256)
+#define VIDEO_TASK_PRIORITY   7
 
-#pragma location = "__iram"
-#pragma data_alignment=32
-uint32_t av_task_stack[AV_TASK_STACK];
+#define AUDIO_QUEUE_LENGTH    128
+#define VIDEO_QUEUE_LENGTH    16
+
+//#pragma location = "__iram"
+//#pragma data_alignment=32
+//uint32_t av_task_stack[AV_TASK_STACK];
 
 #pragma location = "__iram"
 #pragma data_alignment=32
 uint32_t reader_task_stack[READER_TASK_STACK];
 
 typedef struct {
-    AVFrame *pFrame;
-    AVCodecContext *pCodecCtx;
-    AVPacket *packet;
-} av_queue_t;
-
-typedef struct {
     uint8_t *data;
     size_t size;
-} audio_queue_t;
+} av_queue_t;
 
-static QueueHandle_t      av_queue;
-static QueueHandle_t      audio_queue;
+static QueueHandle_t        audio_queue;
+static QueueHandle_t        video_queue;
 
-//static void *audio_frame;
-//static TaskHandle_t       av_task;
-//static TaskHandle_t       reader_task;
-//static SemaphoreHandle_t  lcd_sema;
+static TaskHandle_t         audio_task;
+static TaskHandle_t         video_task;
+
+static SemaphoreHandle_t    audio_sema;
+static SemaphoreHandle_t    video_sema;
+
+static TimerHandle_t        video_timer;
 
 DMA2D_HandleTypeDef Dma2dHandle;
 volatile char *lcd_fb_start = NULL;
@@ -278,6 +281,40 @@ static void log_cb(void* ptr, int level, const char* fmt, va_list vl)
   vprintf(fmt, vl);
 }
 
+static void audio_task_cb(void *arg)
+{
+  av_queue_t m[2] = {0};
+  while(1) {
+    free(m[0].data);
+    xQueueReceive(audio_queue, &m[0], portMAX_DELAY);
+    BSP_AUDIO_OUT_PlayNext((uint16_t*)m[0].data, m[0].size);
+    xSemaphoreTake(audio_sema, portMAX_DELAY);
+    free(m[1].data);
+    xQueueReceive(audio_queue, &m[1], portMAX_DELAY);
+    BSP_AUDIO_OUT_PlayNext((uint16_t*)m[1].data, m[1].size);
+    xSemaphoreTake(audio_sema, portMAX_DELAY);
+  }
+}
+
+static void video_timer_cb(TimerHandle_t pxTimer)
+{
+  xSemaphoreGiveFromISR(video_sema, NULL);
+}
+
+static void video_task_cb(void *arg)
+{
+  void *data_prev = NULL;
+  av_queue_t m;
+  while(1) {
+    xQueueReceive(video_queue, &m, portMAX_DELAY);
+    BSP_LCD_SetLayerAddress(0, (uint32_t)m.data);
+    free(data_prev);
+    data_prev = m.data;
+    xSemaphoreTake(video_sema, portMAX_DELAY);
+  }
+}
+
+#if 0
 //#define SDMMC_READ_SPEED
 static void av_task_cb(void *arg)
 {
@@ -345,21 +382,15 @@ static void av_task_cb(void *arg)
 #endif // SDMMC_READ_SPEED
   }
 }
+#endif // 0
 
-void BSP_AUDIO_OUT_TransferComplete_CallBack(void)
-{
-  audio_queue_t am;
-  if(xQueueReceiveFromISR(audio_queue, &am, NULL)) {
-    free(am.data);
-  }
-}
+//void BSP_AUDIO_OUT_TransferComplete_CallBack(void)
+//{
+//}
 
 void BSP_AUDIO_OUT_HalfTransfer_CallBack(void)
 {
-  audio_queue_t am;
-  if(xQueuePeekFromISR(audio_queue, &am)) {
-    BSP_AUDIO_OUT_PlayNext((uint16_t*)am.data, am.size);
-  }
+  xSemaphoreGiveFromISR(audio_sema, NULL);
 }
 
 /*
@@ -484,12 +515,12 @@ static void reader_task_cb(void *arg)
         Error_Handler(); // No video or audio stream found
 
     // Get pointers to the codec context for audio and video streams
-    AVCodecContext *pCodecCtxOrig = pFormatCtx->streams[videoStream]->codec;
+    AVCodecContext *vCodecCtxOrig = pFormatCtx->streams[videoStream]->codec;
     AVCodecContext *aCodecCtxOrig = pFormatCtx->streams[audioStream]->codec;
 
     // Find the decoder for the video stream
-    AVCodec *pCodec = avcodec_find_decoder(pCodecCtxOrig->codec_id);
-    if(pCodec == NULL) {
+    AVCodec *vCodec = avcodec_find_decoder(vCodecCtxOrig->codec_id);
+    if(vCodec == NULL) {
       printf("Unsupported video codec!\n");
       Error_Handler(); // Codec not found
     }
@@ -502,8 +533,8 @@ static void reader_task_cb(void *arg)
     }
 
     // Copy context
-    AVCodecContext *pCodecCtx = avcodec_alloc_context3(pCodec);
-    if(avcodec_copy_context(pCodecCtx, pCodecCtxOrig) != 0) {
+    AVCodecContext *vCodecCtx = avcodec_alloc_context3(vCodec);
+    if(avcodec_copy_context(vCodecCtx, vCodecCtxOrig) != 0) {
       printf("Couldn't copy video codec context");
       Error_Handler(); // Error copying codec context
     }
@@ -516,60 +547,64 @@ static void reader_task_cb(void *arg)
     }
 
     // Open codec
-    if(avcodec_open2(pCodecCtx, pCodec, &format_opts) < 0 ||
+    if(avcodec_open2(vCodecCtx, vCodec, &format_opts) < 0 ||
        avcodec_open2(aCodecCtx, aCodec, NULL))
       Error_Handler(); // Could not open codec
 
-    // Allocate video frame
-    AVFrame *pFrame = av_frame_alloc();
-
-#ifdef FF_SCALE
-    int width = LCD_X_SIZE;
-    int height = LCD_Y_SIZE;
-    // Allocate an AVFrame structure
-    AVFrame *pFrameRGB = av_frame_alloc();
-    if(pFrameRGB == NULL)
-      Error_Handler();
-
-    uint8_t *buffer = NULL;
-    int numBytes;
-    // Determine required buffer size and allocate buffer
-    numBytes=avpicture_get_size(PIX_FMT_RGB565LE, width, height);
-    buffer = (uint8_t*)malloc(numBytes);
-
-    // Assign appropriate parts of buffer to image planes in pFrameRGB
-    // Note that pFrameRGB is an AVFrame, but AVFrame is a superset
-    // of AVPicture
-    avpicture_fill((AVPicture *)pFrameRGB, buffer, PIX_FMT_RGB565LE, width, height);
-
-    struct SwsContext *sws_ctx = NULL;
-    // initialize SWS context for software scaling
-    sws_ctx = sws_getContext(pCodecCtx->width, pCodecCtx->height, pCodecCtx->pix_fmt, width, height,
-                             PIX_FMT_RGB565LE, SWS_FAST_BILINEAR, NULL, NULL, NULL);
-
-    BSP_LCD_LayerRgb565Init(0, (uint32_t)pFrameRGB->data[0]);
-    BSP_LCD_SetLayerAddress(0, (uint32_t)pFrameRGB->data[0]);
-    BSP_LCD_DisplayOn();
-#endif // FF_SCALE
+    // Allocate video and audio frames
+    AVFrame *vFrame = av_frame_alloc();
+    AVFrame *aFrame = av_frame_alloc();
 
     AVPacket packet;
+    int vframe_finished = 0, aframe_finished = 0;
+    av_queue_t m;
+
     uint32_t sec0 = xTaskGetTickCount() >> 10;
 
-    while(av_read_frame(pFormatCtx, &packet)>=0) {
-      // Is this a packet from the video stream?
-//      if(packet.stream_index == videoStream)
-      {
+    xTimerChangePeriod(video_timer, vCodecCtx->framerate.num, 0);
+    xTimerStart(video_timer, 0);
+
+    while(av_read_frame(pFormatCtx, &packet) >= 0) {
+      if(packet.stream_index == videoStream) {
+        avcodec_decode_video2(vCodecCtx, vFrame, &vframe_finished, &packet);
+        if(vframe_finished) {
+          while(!(m.data = memalign(4, FRAME_BUFFER_SIZE)));
+          m.size = FRAME_BUFFER_SIZE;
+          ScaleYUV2RGB565(vFrame->data[0], vFrame->data[1], vFrame->data[2], m.data,
+                          vCodecCtx->width, vCodecCtx->height, LCD_X_SIZE, LCD_Y_SIZE,
+                          vFrame->linesize[0], vFrame->linesize[1], 2*LCD_X_SIZE,
+                          (YUVType)vCodecCtx->pix_fmt);
+          xQueueSendToBack(video_queue, &m, portMAX_DELAY);
+        }
+      } else if(packet.stream_index == audioStream) {
+        aCodecCtx->request_sample_fmt = AV_SAMPLE_FMT_S16;
+        while(avcodec_decode_audio4(aCodecCtx, aFrame, &aframe_finished, &packet) > 0) {
+            if(aframe_finished) {
+
+              size_t size_in = av_samples_get_buffer_size(NULL, aFrame->channels,
+                  aFrame->nb_samples, aCodecCtx->sample_fmt, 0);
+              size_t size_out = av_samples_get_buffer_size(NULL, 2,
+                  aFrame->nb_samples, AV_SAMPLE_FMT_S16, 0);
+
+              uint64_t layout = aFrame->channel_layout ? aFrame->channel_layout : AV_CH_LAYOUT_MONO;
+              struct SwrContext *ctx = swr_alloc_set_opts(NULL, AV_CH_LAYOUT_STEREO,
+                  AV_SAMPLE_FMT_S16, aFrame->sample_rate, layout,
+                  aCodecCtx->sample_fmt, aFrame->sample_rate, 0, NULL);
+
+              m.size = size_out;
+              while(!(m.data = memalign(4, size_out)));
+
+              if(swr_init(ctx) == 0)
+                swr_convert(ctx, &m.data, aFrame->nb_samples, &aFrame->data[0], aFrame->nb_samples);
+
+              xQueueSendToBack(audio_queue, &m, portMAX_DELAY);
+              swr_close(ctx);
+              swr_free(&ctx);
+              break;
+            }
+        }
 #if 1
         // Send to av task
-        av_queue_t data;
-        data.pFrame = pFrame;
-        if(packet.stream_index == videoStream) {
-          data.pCodecCtx = pCodecCtx;
-        } else if(packet.stream_index == audioStream) {
-          data.pCodecCtx = aCodecCtx;
-        }
-        data.packet = &packet;
-        xQueueSendToBack(av_queue, &data, portMAX_DELAY);
 #else
         int frameFinished;
         // Decode video frame
@@ -622,11 +657,14 @@ static void reader_task_cb(void *arg)
     av_free(pFrameRGB);
 #endif
     // Free the YUV frame
-    av_free(pFrame);
+    av_free(vFrame);
+    av_free(aFrame);
 
     // Close the codecs
-    avcodec_close(pCodecCtx);
-    avcodec_close(pCodecCtxOrig);
+    avcodec_close(vCodecCtx);
+    avcodec_close(vCodecCtxOrig);
+    avcodec_close(aCodecCtx);
+    avcodec_close(aCodecCtxOrig);
 
     // Close the video file
     avformat_close_input(&pFormatCtx);
@@ -709,14 +747,14 @@ typedef struct xMEMORY_REGION
     unsigned long ulParameters;
 } MemoryRegion_t;
 */
-TaskParameters_t av_task_param = {
-  .pvTaskCode = av_task_cb,
-  .pcName = "av_task",
-  .usStackDepth = AV_TASK_STACK,
-  .uxPriority = AV_TASK_PRIORITY,
-  .puxStackBuffer = av_task_stack,
-  .xRegions = {NULL}
-};
+//TaskParameters_t av_task_param = {
+//  .pvTaskCode = av_task_cb,
+//  .pcName = "av_task",
+//  .usStackDepth = AV_TASK_STACK,
+//  .uxPriority = AV_TASK_PRIORITY,
+//  .puxStackBuffer = av_task_stack,
+//  .xRegions = {NULL}
+//};
 
 TaskParameters_t reader_task_param = {
   .pvTaskCode = reader_task_cb,
@@ -724,7 +762,7 @@ TaskParameters_t reader_task_param = {
   .usStackDepth = READER_TASK_STACK,
   .uxPriority = READER_TASK_PRIORITY,
   .puxStackBuffer = reader_task_stack,
-  .xRegions = {NULL}//(void*)0x20000000, 0x80000000, portMPU_REGION_READ_WRITE | portMPU_REGION_CACHEABLE}
+  .xRegions = {NULL}
 };
 
 int play_init(void)
@@ -744,7 +782,7 @@ int play_init(void)
     // Create audio/video task
 //    xTaskCreate(av_task_cb, "av_task", AV_TASK_STACK, NULL, AV_TASK_PRIORITY, &av_task);
 //    ASSERT(av_task);
-    xTaskCreateRestricted(&av_task_param, NULL);
+//    xTaskCreateRestricted(&av_task_param, NULL);
 
 #if 0
     // Create LCD semaphore
@@ -753,12 +791,29 @@ int play_init(void)
     xSemaphoreGive(lcd_sema);
 #endif
     // Create av queue
-    av_queue = xQueueCreate(AV_QUEUE_LENGTH, sizeof(av_queue_t));
-    ASSERT(av_queue);
+//    av_queue = xQueueCreate(AV_QUEUE_LENGTH, sizeof(av_queue_t));
+//    ASSERT(av_queue);
 
     // Create audio queue
-    audio_queue = xQueueCreate(AUDIO_QUEUE_LENGTH, sizeof(audio_queue_t));
+    audio_queue = xQueueCreate(AUDIO_QUEUE_LENGTH, sizeof(av_queue_t));
     ASSERT(audio_queue);
+
+    // Create video queue
+    video_queue = xQueueCreate(VIDEO_QUEUE_LENGTH, sizeof(av_queue_t));
+    ASSERT(video_queue);
+
+    // Create audio task
+    xTaskCreate(audio_task_cb, "audio_task", AUDIO_TASK_STACK, NULL,
+                AUDIO_TASK_PRIORITY, &audio_task);
+    ASSERT(audio_task);
+
+    // Create video task
+    xTaskCreate(video_task_cb, "video_task", VIDEO_TASK_STACK, NULL,
+                VIDEO_TASK_PRIORITY, &video_task);
+    ASSERT(video_task);
+
+    // Create video task timer
+    video_timer = xTimerCreate("video timer", 10, pdTRUE, NULL, video_timer_cb);
 
     // Create reader task
 //    xTaskCreate(reader_task_cb, "reader_task", READER_TASK_STACK, NULL, READER_TASK_PRIORITY,
@@ -770,11 +825,9 @@ int play_init(void)
     ASSERT(ret == 0);
     BSP_AUDIO_OUT_SetAudioFrameSlot(CODEC_AUDIOFRAME_SLOT_02);
 
-
-    // Create audio task
-
     return 0;
 }
+
 #if 0
 void HAL_DMA2D_MspInit(DMA2D_HandleTypeDef *hdma2d)
 {

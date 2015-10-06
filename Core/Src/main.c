@@ -21,89 +21,22 @@
   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   * See the License for the specific language governing permissions and
   * limitations under the License.
- *
+  *
   ******************************************************************************
   */
 
-/* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
-
-/* Private typedef -----------------------------------------------------------*/
-typedef struct
-{ /* Mail object structure */
-  uint32_t var1; /* var1 is a uint32_t */
-  uint32_t var2; /* var2 is a uint32_t */
-  uint8_t var3; /* var3 is a uint8_t */
-} Amail_TypeDef;
-
-/* Private define ------------------------------------------------------------*/
-#define blckqSTACK_SIZE   configMINIMAL_STACK_SIZE
-#define MAIL_SIZE        (uint32_t) 1
-
-/* Private macro -------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
-osMailQId mailId;
-
-uint32_t ProducerValue1 = 0, ProducerValue2 = 0;
-uint8_t ProducerValue3 = 0;
-uint32_t ConsumerValue1 = 0, ConsumerValue2 = 0;
-uint8_t ConsumerValue3 = 0;
-
-/* Private function prototypes -----------------------------------------------*/
-
-/* Thread function that creates a mail and posts it on a mail queue. */
-//static void MailQueueProducer (const void *argument);
-
-/* Thread function that receives mail , remove it  from a mail queue and checks that
-it is the expected mail. */
-//static void MailQueueConsumer (const void *argument);
 
 void SystemClock_Config(void);
 void CPU_CACHE_Enable(void);
 
-/*============================================================================*/
-/** @defgroup MAIN_Private_FunctionPrototypes
-* @{
-*/
-//static void MPU_Config(void);
-//static void GUIThread(void const * argument);
-//static void TimerCallback(void const *n);
-
-extern K_ModuleItem_Typedef  video_player_board;
-extern K_ModuleItem_Typedef  audio_player_board;
-extern K_ModuleItem_Typedef  devices_board;
-extern K_ModuleItem_Typedef  games_board;
-extern K_ModuleItem_Typedef  gardening_control_board;
-extern K_ModuleItem_Typedef  home_alarm_board;
-extern K_ModuleItem_Typedef  settings_board;
-extern K_ModuleItem_Typedef  audio_recorder_board;
-extern K_ModuleItem_Typedef  vnc_server;
-
-osTimerId lcd_timer;
-
-//#pragma location=0x20006024
-//uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
-
-/** @defgroup MAIN_Private_Functions
-* @{
-*/
-
-/**
-* @brief  Main program
-* @param  None
-* @retval int
-*/
 int main(void)
 {
-  /* Configure the MPU attributes as Write Through */
-//  MPU_Config();
-
-  /* Enable the CPU Cache */
-//  CPU_CACHE_Enable();
-
-  /* Configure the system clock */
-//  SystemClock_Config();
+  /*
+     CPU Cache and system clock was enabled in system_stm32f7xx.c
+     The MPU is configured by RTOS
+  */
 
   /* STM32F7xx HAL library initialization:
   - Configure the Flash ART accelerator on ITCM interface
@@ -120,85 +53,9 @@ int main(void)
 
   play_init();
 
-#if 0
-  /* Create GUI task */
-  osThreadDef(GUI_Thread, GUIThread, osPriorityNormal, 0, 2048);
-  osThreadCreate (osThread(GUI_Thread), NULL);
-
-  /* Add Modules*/
-  k_ModuleInit();
-
-  /* Link modules */
-  k_ModuleAdd(&audio_player_board);
-  k_ModuleAdd(&video_player_board);
-  k_ModuleAdd(&games_board);
-  k_ModuleAdd(&audio_recorder_board);
-  k_ModuleAdd(&gardening_control_board);
-  k_ModuleAdd(&home_alarm_board);
-  k_ModuleAdd(&vnc_server);
-  k_ModuleAdd(&settings_board);
-
-  /* Initialize GUI */
-  GUI_Init();
-
-  WM_MULTIBUF_Enable(1);
-  GUI_SetLayerVisEx (1, 0);
-  GUI_SelectLayer(0);
-
-  GUI_SetBkColor(GUI_WHITE);
-  GUI_Clear();
-
-   /* Set General Graphical proprieties */
-  k_SetGuiProfile();
-
-  /* Create Touch screen Timer */
-  osTimerDef(TS_Timer, TimerCallback);
-  lcd_timer =  osTimerCreate(osTimer(TS_Timer), osTimerPeriodic, (void *)0);
-
-  /* Start the TS Timer */
-  osTimerStart(lcd_timer, 100);
-#endif // 0
   /* Start scheduler */
   osKernelStart ();
-
-  /* We should never get here as control is now taken by the scheduler */
-  for( ;; );
 }
-
-#if 0
-/**
-  * @brief  Start task
-  * @param  argument: pointer that is passed to the thread function as start argument.
-  * @retval None
-  */
-static void GUIThread(void const * argument)
-{
-  /* Initialize Storage Units */
-  k_StorageInit();
-
-  /* Demo Startup */
-  k_StartUp();
-
-  /* Show the main menu */
-  k_InitMenu();
-
-  /* Gui background Task */
-  while(1) {
-    GUI_Exec(); /* Do the background work ... Update windows etc.) */
-    osDelay(20); /* Nothing left to do for the moment ... Idle processing */
-  }
-}
-
-/**
-  * @brief  Timer callbacsk (40 ms)
-  * @param  n: Timer index
-  * @retval None
-  */
-static void TimerCallback(void const *n)
-{
-  k_TouchUpdate();
-}
-#endif // 0
 
 #ifdef CLK_200MHZ
 /**
@@ -335,12 +192,9 @@ void SystemClock_Config(void)
 /**
   * @brief This function provides accurate delay (in milliseconds) based
   *        on SysTick counter flag.
-  * @note This function is declared as __weak to be overwritten in case of other
-  *       implementations in user file.
   * @param Delay: specifies the delay duration in milliseconds.
   * @retval None
   */
-
 void HAL_Delay (__IO uint32_t Delay)
 {
   while(Delay)
@@ -351,41 +205,6 @@ void HAL_Delay (__IO uint32_t Delay)
     }
   }
 }
-
-#if 0
-/**
-  * @brief  Configure the MPU attributes as Write Through for SRAM1/2.
-  * @note   The Base Address is 0x20010000 since this memory interface is the AXI.
-  *         The Region Size is 256KB, it is related to SRAM1 and SRAM2  memory size.
-  * @param  None
-  * @retval None
-  */
-static void MPU_Config(void)
-{
-  MPU_Region_InitTypeDef MPU_InitStruct;
-
-  /* Disable the MPU */
-  HAL_MPU_Disable();
-
-  /* Configure the MPU attributes as WT for SRAM */
-  MPU_InitStruct.Enable = MPU_REGION_ENABLE;
-  MPU_InitStruct.BaseAddress = 0x20000000;
-  MPU_InitStruct.Size = MPU_REGION_SIZE_32B;
-  MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
-  MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
-  MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;
-  MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
-  MPU_InitStruct.Number = MPU_REGION_NUMBER7;
-  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
-  MPU_InitStruct.SubRegionDisable = 0x00;
-  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
-
-  HAL_MPU_ConfigRegion(&MPU_InitStruct);
-
-  /* Enable the MPU */
-  HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
-}
-#endif // 0
 
 /**
   * @brief  CPU L1-Cache enable.
