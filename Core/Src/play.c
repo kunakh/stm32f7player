@@ -25,6 +25,8 @@
 #include "libavutil/opt.h"
 #include "libavcodec/avfft.h"
 #include "libswresample/swresample.h"
+#include "libswresample/audioconvert.h"
+//#include "libavresample/audio_data.h"
 
 #if CONFIG_AVFILTER
 # include "libavfilter/avcodec.h"
@@ -42,12 +44,14 @@
 #define LCD_Y_SIZE          RK043FN48H_HEIGHT
 #define FRAME_BUFFER_SIZE   (LCD_X_SIZE * LCD_Y_SIZE * 2) // rgb565
 
-#define AV_TASK_STACK      (5*1024)
+#define AV_TASK_STACK      (10*1024)
 #define AV_TASK_PRIORITY   7
 #define AV_QUEUE_LENGTH    16
 
 #define READER_TASK_PRIORITY  5
 #define READER_TASK_STACK     (10*1024)
+
+#define AUDIO_QUEUE_LENGTH    128
 
 #pragma location = "__iram"
 #pragma data_alignment=32
@@ -63,7 +67,15 @@ typedef struct {
     AVPacket *packet;
 } av_queue_t;
 
+typedef struct {
+    uint8_t *data;
+    size_t size;
+} audio_queue_t;
+
 static QueueHandle_t      av_queue;
+static QueueHandle_t      audio_queue;
+
+//static void *audio_frame;
 //static TaskHandle_t       av_task;
 //static TaskHandle_t       reader_task;
 //static SemaphoreHandle_t  lcd_sema;
@@ -270,11 +282,8 @@ static void log_cb(void* ptr, int level, const char* fmt, va_list vl)
 static void av_task_cb(void *arg)
 {
   av_queue_t m;
-  int vframe_finished = 0, aframe_finished = 0;
-
-  AVFrame aframe;
-  AVPacket apkt;
-//  int show = 0;
+  int vframe_finished = 0, aframe_finished = 0, audio_playing = 0;
+  AVFrame *aframe = av_frame_alloc();
 
   while(1) {
     xQueueReceive(av_queue, &m, portMAX_DELAY);
@@ -295,17 +304,61 @@ static void av_task_cb(void *arg)
     }
     if(m.pCodecCtx->codec_type == AVMEDIA_TYPE_AUDIO) {
         // Decode audio frame
-        while(avcodec_decode_audio4(m.pCodecCtx, &aframe, &aframe_finished, &apkt) > 0) {
+        m.pCodecCtx->request_sample_fmt = AV_SAMPLE_FMT_S16;
+        while(avcodec_decode_audio4(m.pCodecCtx, aframe, &aframe_finished, m.packet) > 0) {
             if(aframe_finished) {
-                size_t size = av_samples_get_buffer_size(NULL, m.pCodecCtx->channels,
-                        aframe.nb_samples, m.pCodecCtx->sample_fmt, 0);
-//                    uint8_t *audio_buf = memalign(4, size);
-//                    memcpy(audio_buf, aframe.data[0], size);
+
+              size_t size_in = av_samples_get_buffer_size(NULL, aframe->channels,
+                  aframe->nb_samples, m.pCodecCtx->sample_fmt, 0);
+              size_t size_out = av_samples_get_buffer_size(NULL, 2,
+                  aframe->nb_samples, AV_SAMPLE_FMT_S16, 0);
+
+              uint64_t layout = aframe->channel_layout ? aframe->channel_layout : AV_CH_LAYOUT_MONO;
+              struct SwrContext *ctx = swr_alloc_set_opts(NULL, AV_CH_LAYOUT_STEREO,
+                  AV_SAMPLE_FMT_S16, aframe->sample_rate, layout,
+                  m.pCodecCtx->sample_fmt, aframe->sample_rate, 0, NULL);
+
+              audio_queue_t am;
+              am.size = size_out;
+              am.data = memalign(4, am.size);
+
+              if(swr_init(ctx) == 0)
+                swr_convert(ctx, &am.data, aframe->nb_samples, &aframe->data[0], aframe->nb_samples);
+
+              swr_close(ctx);
+              swr_free(&ctx);
+
+                if(!audio_playing) {
+                    audio_playing = 1;
+                    BSP_AUDIO_OUT_Init(OUTPUT_DEVICE_AUTO, 25, AUDIO_FREQUENCY_11K/*aframe->sample_rate*/); // TODO: add sample_rate to AUDIO_FREQ conversion
+                    BSP_AUDIO_OUT_Play((uint16_t*)am.data, am.size);
+                    // TODO: free am.data by e.g. timer, add locks to RTOS
+//                    audio_frame = am.data;
+                } else {
+                    xQueueSendToBack(audio_queue, &am, portMAX_DELAY);
+                }
+                break;
             }
         }
     }
     av_free_packet(m.packet);
 #endif // SDMMC_READ_SPEED
+  }
+}
+
+void BSP_AUDIO_OUT_TransferComplete_CallBack(void)
+{
+  audio_queue_t am;
+  if(xQueueReceiveFromISR(audio_queue, &am, NULL)) {
+    free(am.data);
+  }
+}
+
+void BSP_AUDIO_OUT_HalfTransfer_CallBack(void)
+{
+  audio_queue_t am;
+  if(xQueuePeekFromISR(audio_queue, &am)) {
+    BSP_AUDIO_OUT_PlayNext((uint16_t*)am.data, am.size);
   }
 }
 
@@ -507,7 +560,7 @@ static void reader_task_cb(void *arg)
 //      if(packet.stream_index == videoStream)
       {
 #if 1
-        // Send to video task
+        // Send to av task
         av_queue_t data;
         data.pFrame = pFrame;
         if(packet.stream_index == videoStream) {
@@ -699,15 +752,24 @@ int play_init(void)
     ASSERT(lcd_sema);
     xSemaphoreGive(lcd_sema);
 #endif
-    // Create audio/video queue
+    // Create av queue
     av_queue = xQueueCreate(AV_QUEUE_LENGTH, sizeof(av_queue_t));
     ASSERT(av_queue);
+
+    // Create audio queue
+    audio_queue = xQueueCreate(AUDIO_QUEUE_LENGTH, sizeof(audio_queue_t));
+    ASSERT(audio_queue);
 
     // Create reader task
 //    xTaskCreate(reader_task_cb, "reader_task", READER_TASK_STACK, NULL, READER_TASK_PRIORITY,
 //                &reader_task);
 //    ASSERT(reader_task);
     xTaskCreateRestricted(&reader_task_param, NULL);
+
+    int ret = BSP_AUDIO_OUT_Init(OUTPUT_DEVICE_AUTO, 25, I2S_AUDIOFREQ_48K);
+    ASSERT(ret == 0);
+    BSP_AUDIO_OUT_SetAudioFrameSlot(CODEC_AUDIOFRAME_SLOT_02);
+
 
     // Create audio task
 
@@ -722,3 +784,71 @@ void HAL_DMA2D_MspInit(DMA2D_HandleTypeDef *hdma2d)
   HAL_NVIC_EnableIRQ(DMA2D_IRQn);
 }
 #endif
+
+
+/**
+  * @brief  Clock Config.
+  * @param  hsai: might be required to set audio peripheral predivider if any.
+  * @param  AudioFreq: Audio frequency used to play the audio stream.
+  * @note   This API is called by BSP_AUDIO_OUT_Init() and BSP_AUDIO_OUT_SetFrequency()
+  *         Being __weak it can be overwritten by the application
+  * @retval None
+  */
+void BSP_AUDIO_OUT_ClockConfig(SAI_HandleTypeDef *hsai, uint32_t AudioFreq, void *Params)
+{
+  RCC_PeriphCLKInitTypeDef RCC_ExCLKInitStruct;
+
+  HAL_RCCEx_GetPeriphCLKConfig(&RCC_ExCLKInitStruct);
+
+  /* Set the PLL configuration according to the audio frequency */
+  if((AudioFreq == AUDIO_FREQUENCY_11K) || (AudioFreq == AUDIO_FREQUENCY_22K) || (AudioFreq == AUDIO_FREQUENCY_44K))
+  {
+    /* Configure PLLSAI prescalers */
+    /* PLLI2S_VCO: VCO_429M
+    SAI_CLK(first level) = PLLI2S_VCO/PLLSAIQ = 429/2 = 214.5 Mhz
+    SAI_CLK_x = SAI_CLK(first level)/PLLI2SDivQ = 214.5/19 = 11.289 Mhz */
+    RCC_ExCLKInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SAI2;
+    RCC_ExCLKInitStruct.Sai2ClockSelection = RCC_SAI2CLKSOURCE_PLLI2S;
+    RCC_ExCLKInitStruct.PLLI2S.PLLI2SP = 8;
+    RCC_ExCLKInitStruct.PLLI2S.PLLI2SN = 429;
+    RCC_ExCLKInitStruct.PLLI2S.PLLI2SQ = 2;
+    RCC_ExCLKInitStruct.PLLI2SDivQ = 19;
+    HAL_RCCEx_PeriphCLKConfig(&RCC_ExCLKInitStruct);
+  }
+  else /* AUDIO_FREQUENCY_8K, AUDIO_FREQUENCY_16K, AUDIO_FREQUENCY_48K), AUDIO_FREQUENCY_96K */
+  {
+    /* SAI clock config
+    PLLI2S_VCO: VCO_344M
+    SAI_CLK(first level) = PLLI2S_VCO/PLLSAIQ = 344/7 = 49.142 Mhz
+    SAI_CLK_x = SAI_CLK(first level)/PLLI2SDivQ = 49.142/1 = 49.142 Mhz */
+    RCC_ExCLKInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SAI2;
+    RCC_ExCLKInitStruct.Sai2ClockSelection = RCC_SAI2CLKSOURCE_PLLI2S;
+//    RCC_ExCLKInitStruct.PLLI2S.PLLI2SP = 8;
+    RCC_ExCLKInitStruct.PLLI2S.PLLI2SN = 344;
+    RCC_ExCLKInitStruct.PLLI2S.PLLI2SQ = 7;
+    RCC_ExCLKInitStruct.PLLI2SDivQ = 1;
+    HAL_RCCEx_PeriphCLKConfig(&RCC_ExCLKInitStruct);
+  }
+}
+
+/**
+  * @brief  Clock Config.
+  * @param  hltdc: LTDC handle
+  * @note   This API is called by BSP_LCD_Init()
+  * @retval None
+  */
+void BSP_LCD_ClockConfig(LTDC_HandleTypeDef *hltdc, void *Params)
+{
+  static RCC_PeriphCLKInitTypeDef  periph_clk_init_struct;
+
+  /* RK043FN48H LCD clock configuration */
+  /* PLLSAI_VCO Input = HSE_VALUE/PLL_M = 1 Mhz */
+  /* PLLSAI_VCO Output = PLLSAI_VCO Input * PLLSAIN = 192 Mhz */
+  /* PLLLCDCLK = PLLSAI_VCO Output/PLLSAIR = 192/5 = 38.4 Mhz */
+  /* LTDC clock frequency = PLLLCDCLK / LTDC_PLLSAI_DIVR_4 = 38.4/4 = 9.6Mhz */
+  periph_clk_init_struct.PeriphClockSelection = RCC_PERIPHCLK_LTDC;
+  periph_clk_init_struct.PLLSAI.PLLSAIN = 192;
+  periph_clk_init_struct.PLLSAI.PLLSAIR = RK043FN48H_FREQUENCY_DIVIDER;
+  periph_clk_init_struct.PLLSAIDivR = RCC_PLLSAIDIVR_4;
+  HAL_RCCEx_PeriphCLKConfig(&periph_clk_init_struct);
+}

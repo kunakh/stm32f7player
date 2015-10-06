@@ -66,7 +66,7 @@ void CPU_CACHE_Enable(void);
 /** @defgroup MAIN_Private_FunctionPrototypes
 * @{
 */
-static void MPU_Config(void);
+//static void MPU_Config(void);
 //static void GUIThread(void const * argument);
 //static void TimerCallback(void const *n);
 
@@ -352,6 +352,7 @@ void HAL_Delay (__IO uint32_t Delay)
   }
 }
 
+#if 0
 /**
   * @brief  Configure the MPU attributes as Write Through for SRAM1/2.
   * @note   The Base Address is 0x20010000 since this memory interface is the AXI.
@@ -384,7 +385,7 @@ static void MPU_Config(void)
   /* Enable the MPU */
   HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
 }
-
+#endif // 0
 
 /**
   * @brief  CPU L1-Cache enable.
@@ -403,28 +404,6 @@ void CPU_CACHE_Enable(void)
   /* Enable D-Cache */
   SCB_EnableDCache();
 }
-
-#ifdef USE_FULL_ASSERT
-/**
-* @brief  assert_failed
-*         Reports the name of the source file and the source line number
-*         where the assert_param error has occurred.
-* @param  File: pointer to the source file name
-* @param  Line: assert_param error line source number
-* @retval None
-*/
-void assert_failed(uint8_t* file, uint32_t line)
-{
-  /* User can add his own implementation to report the file name and line
-  number,ex: printf("Wrong parameters value: file %s on line %d\r\n",
-  file, line) */
-
-  /* Infinite loop */
-  while (1)
-  {}
-}
-
-#endif
 
 void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
 {

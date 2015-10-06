@@ -12,7 +12,7 @@ ByteLimit=50
 stlinkserialNo=114C5BB8
 stlinkfoundProbes=
 [DebugChecksum]
-Checksum=551011602
+Checksum=256718349
 [Exceptions]
 StopOnUncaught=_ 0
 StopOnThrow=_ 0
@@ -43,8 +43,12 @@ ITMlogFile=$PROJ_DIR$\ITM.log
 FilePath=_ ""
 UseFilter=_ 0
 [struct_types]
-Fmt0=xMPU_REGION_REGISTERS-ulRegionAttribute	4	0
-Fmt1=xMPU_REGION_REGISTERS-ulRegionBaseAddress	4	0
+Fmt0=DMA_Stream_TypeDef-CR	4	0
+Fmt1=DMA_Stream_TypeDef-M0AR	4	0
+Fmt2=DMA_Stream_TypeDef-M1AR	4	0
+Fmt3=SAI_Block_TypeDef-CR1	4	0
+Fmt4=xMPU_REGION_REGISTERS-ulRegionAttribute	4	0
+Fmt5=xMPU_REGION_REGISTERS-ulRegionBaseAddress	4	0
 [watch_formats]
 Fmt0={W}1:pFrameRGB->linesize[0]	4	0
 [Trace2]
@@ -75,7 +79,9 @@ SumSortOrder=0
 [Disassemble mode]
 mode=0
 [Breakpoints2]
-Count=0
+Bp0=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\play.c}.353.21" 0 0 1 "" 0 "" 0
+Bp1=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\play.c}.789.9" 0 0 1 "" 0 "" 0
+Count=2
 [Log file]
 LoggingEnabled=_ 0
 LogFile=_ ""

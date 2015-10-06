@@ -211,6 +211,7 @@ extern __IO uint16_t AudioInVolume;
   */
 uint8_t BSP_AUDIO_OUT_Init(uint16_t OutputDevice, uint8_t Volume, uint32_t AudioFreq);
 uint8_t BSP_AUDIO_OUT_Play(uint16_t* pBuffer, uint32_t Size);
+void    BSP_AUDIO_OUT_PlayNext(uint16_t* pBuffer, uint32_t Size);
 void    BSP_AUDIO_OUT_ChangeBuffer(uint16_t *pData, uint16_t Size);
 uint8_t BSP_AUDIO_OUT_Pause(void);
 uint8_t BSP_AUDIO_OUT_Resume(void);
