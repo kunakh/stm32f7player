@@ -15,7 +15,7 @@ define symbol __ICFEDIT_region_QSPI_end__    = 0x90FFFFFF;
 
 /*-Sizes-*/
 define symbol __ICFEDIT_size_cstack__ = 0x200;
-define symbol __ICFEDIT_size_heap__   = 0x40a000;
+define symbol __ICFEDIT_size_heap__   = 0x540000;
 /**** End of ICF editor section. ###ICF###*/
 
 

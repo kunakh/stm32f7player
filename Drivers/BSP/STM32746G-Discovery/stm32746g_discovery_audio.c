@@ -239,13 +239,14 @@ uint8_t BSP_AUDIO_OUT_Play(uint16_t* pBuffer, uint32_t Size)
 
 void BSP_AUDIO_OUT_PlayNext(uint16_t* pBuffer, uint32_t Size)
 {
-  if(haudio_out_sai.hdmatx->Instance->NDTR == 0) {
+  if(haudio_out_sai.hdmatx->Instance->NDTR == 0
+     || haudio_out_sai.hdmatx->Instance->M1AR == 0) {
     BSP_AUDIO_OUT_Play(pBuffer, Size);
     return;
   }
 
-  haudio_out_sai.hdmatx->Instance->CR |= DMA_SxCR_DBM;
 //  haudio_out_sai.hdmatx->Instance->NDTR = Size >> 1;
+//  haudio_out_sai.hdmatx->Instance->CR |= DMA_SxCR_DBM;
 //  haudio_out_sai.hdmatx->Instance->PAR = haudio_out_sai.Instance->DR;
   if((haudio_out_sai.hdmatx->Instance->CR & DMA_SxCR_CT) != 0)
     haudio_out_sai.hdmatx->Instance->M0AR = (uint32_t)pBuffer;
@@ -597,7 +598,7 @@ __weak void BSP_AUDIO_OUT_MspInit(SAI_HandleTypeDef *hsai, void *Params)
     hdma_sai_tx.Init.MemInc              = DMA_MINC_ENABLE;
     hdma_sai_tx.Init.PeriphDataAlignment = AUDIO_OUT_SAIx_DMAx_PERIPH_DATA_SIZE;
     hdma_sai_tx.Init.MemDataAlignment    = AUDIO_OUT_SAIx_DMAx_MEM_DATA_SIZE;
-    hdma_sai_tx.Init.Mode                = DMA_CIRCULAR;
+    hdma_sai_tx.Init.Mode                = DMA_SxCR_DBM;
     hdma_sai_tx.Init.Priority            = DMA_PRIORITY_HIGH;
     hdma_sai_tx.Init.FIFOMode            = DMA_FIFOMODE_ENABLE;
     hdma_sai_tx.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
