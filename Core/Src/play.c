@@ -26,7 +26,6 @@
 #include "libavcodec/avfft.h"
 #include "libswresample/swresample.h"
 #include "libswresample/audioconvert.h"
-//#include "libavresample/audio_data.h"
 
 #if CONFIG_AVFILTER
 # include "libavfilter/avcodec.h"
@@ -45,17 +44,17 @@
 #define FRAME_BUFFER_SIZE   (LCD_X_SIZE * LCD_Y_SIZE * 2) // rgb565
 
 #define READER_TASK_PRIORITY  5
-#define READER_TASK_STACK     (15*1024)
+#define READER_TASK_STACK     (5*1024)
 
 #define AUDIO_TASK_STACK      (256)
 #define AUDIO_TASK_PRIORITY   6
 #define VIDEO_TASK_STACK      (256)
 #define VIDEO_TASK_PRIORITY   7
 
-#define AUDIO_QUEUE_LENGTH    4
+#define AUDIO_QUEUE_LENGTH    32
 #define VIDEO_QUEUE_LENGTH    4
 
-#define AUDIO_SEMA_TIMEOUT    3000
+#define AUDIO_SEMA_TIMEOUT    2000
 #define AV_START_DELAY        2000
 
 #define countof(a)  (sizeof(a)/sizeof(a[0]))
@@ -95,11 +94,22 @@ void *memalign(size_t align, size_t size)
   return __iar_dlmemalign(align, size);
 }
 
-void Error_Handler(void)
+struct tm *localtime_r(const time_t* t, struct tm *r)
 {
-  BSP_LED_Init(LED1);
-  BSP_LED_On(LED1);
-  while(1){}
+    struct tm *p = localtime(t);
+    if (!p)
+        return NULL;
+    *r = *p;
+    return r;
+}
+
+struct tm *gmtime_r(const time_t* t, struct tm *r)
+{
+    struct tm *p = gmtime(t);
+    if (!p)
+        return NULL;
+    *r = *p;
+    return r;
 }
 
 int __errno(int e)
@@ -510,7 +520,7 @@ static void reader_task_cb(void *arg)
         }
       } else
         // Decode audio packet
-        if(packet.stream_index == audioStream) {
+        if(0&&packet.stream_index == audioStream) {
         aCodecCtx->request_sample_fmt = AV_SAMPLE_FMT_S16;
         while(avcodec_decode_audio4(aCodecCtx, aFrame, &aframe_finished, &packet) > 0) {
             if(aframe_finished) {
@@ -661,4 +671,11 @@ void BSP_AUDIO_OUT_ClockConfig(SAI_HandleTypeDef *hsai, uint32_t AudioFreq, void
     RCC_ExCLKInitStruct.PLLI2SDivQ = 1;
     HAL_RCCEx_PeriphCLKConfig(&RCC_ExCLKInitStruct);
   }
+}
+
+void Error_Handler(void)
+{
+  BSP_LED_Init(LED1);
+  BSP_LED_On(LED1);
+  while(1){}
 }

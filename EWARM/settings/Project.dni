@@ -12,7 +12,7 @@ ByteLimit=50
 stlinkserialNo=114C5BB8
 stlinkfoundProbes=
 [DebugChecksum]
-Checksum=551879591
+Checksum=-1337063975
 [Exceptions]
 StopOnUncaught=_ 0
 StopOnThrow=_ 0
@@ -79,8 +79,8 @@ SumSortOrder=0
 [Disassemble mode]
 mode=0
 [Breakpoints2]
-Bp0=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\play.c}.555.5" 0 0 1 "" 0 "" 0
-Bp1=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\play.c}.585.5" 0 0 1 "" 0 "" 0
+Bp0=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\play.c}.595.5" 0 0 1 "" 0 "" 0
+Bp1=_ 0 "EMUL_CODE" "0xC8614428" 0 0 1 "" 0 "" 0
 Count=2
 [Log file]
 LoggingEnabled=_ 0

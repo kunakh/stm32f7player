@@ -1124,7 +1124,7 @@
         </option>
         <option>
           <name>GRuntimeLibThreads</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>CoreVariant</name>
@@ -3253,9 +3253,6 @@
         </file>
         <file>
           <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\portable\MemMang\heap_4.c</name>
-          <excluded>
-            <configuration>ffmpeg</configuration>
-          </excluded>
         </file>
         <file>
           <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\portable\IAR\ARM_CM7\r0p1\port.c</name>

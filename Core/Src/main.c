@@ -31,6 +31,9 @@
 void SystemClock_Config(void);
 void CPU_CACHE_Enable(void);
 
+#pragma location = "__iram"
+uint8_t ucHeap[configTOTAL_HEAP_SIZE];
+
 int main(void)
 {
   /*
@@ -236,6 +239,49 @@ void vApplicationMallocFailedHook(void)
   Error_Handler();
 }
 
+#if _DLIB_THREAD_SUPPORT
+void __iar_system_Mtxinit(__iar_Rmtx *m)
+{
+  *m = xSemaphoreCreateRecursiveMutex();
+}
+
+void __iar_system_Mtxdst(__iar_Rmtx *m)
+{
+  vSemaphoreDelete(*m);
+}
+
+void __iar_system_Mtxlock(__iar_Rmtx *m)
+{
+    xSemaphoreTakeRecursive(*m, portMAX_DELAY);
+}
+
+void __iar_system_Mtxunlock(__iar_Rmtx *m)
+{
+    xSemaphoreGiveRecursive(*m);
+}
+
+void __iar_file_Mtxinit(__iar_Rmtx *m)
+{
+  *m = xSemaphoreCreateRecursiveMutex();
+}
+
+void __iar_file_Mtxdst(__iar_Rmtx *m)
+{
+  vSemaphoreDelete(*m);
+}
+
+void __iar_file_Mtxlock(__iar_Rmtx *m)
+{
+    xSemaphoreTakeRecursive(*m, portMAX_DELAY);
+}
+
+void __iar_file_Mtxunlock(__iar_Rmtx *m)
+{
+    xSemaphoreGiveRecursive(*m);
+}
+#endif // _DLIB_THREAD_SUPPORT
+
+#if !configAPPLICATION_ALLOCATED_HEAP
 void *pvPortMalloc(size_t xWantedSize)
 {
   return malloc(xWantedSize);
@@ -245,5 +291,4 @@ void vPortFree(void *pv)
 {
   free(pv);
 }
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+#endif // configAPPLICATION_ALLOCATED_HEAP
