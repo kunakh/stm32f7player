@@ -2536,13 +2536,7 @@
           <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\portable\IAR\ARM_CM7\r0p1\port.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\portable\GCC\ARM_CM3_MPU\port.c</name>
-        </file>
-        <file>
           <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\portable\IAR\ARM_CM7\r0p1\portasm.s</name>
-        </file>
-        <file>
-          <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\portable\GCC\ARM_CM3_MPU\portmacro.h</name>
         </file>
       </group>
       <file>

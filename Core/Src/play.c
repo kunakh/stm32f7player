@@ -44,7 +44,7 @@
 #define FRAME_BUFFER_SIZE   (LCD_X_SIZE * LCD_Y_SIZE * 2) // rgb565
 
 #define READER_TASK_PRIORITY  5
-#define READER_TASK_STACK     (5*1024)
+#define READER_TASK_STACK     (10*1024)
 
 #define AUDIO_TASK_STACK      (256)
 #define AUDIO_TASK_PRIORITY   6
@@ -400,7 +400,7 @@ static void reader_task_cb(void *arg)
     printf("crc: %x\n", crc);
     free(buff);
 #else
-    const char *filenames[3] = {"test6.avi", "H264_test1_480x360.mp4", "MP4_640x360.mp4"};
+    const char *filenames[3] = {"MP4_640x360.mp4", "test6.avi", "H264_test1_480x360.mp4"};
     const char *filename = filenames[count++];
     if (count > 2)
       count = 0;
@@ -520,7 +520,7 @@ static void reader_task_cb(void *arg)
         }
       } else
         // Decode audio packet
-        if(0&&packet.stream_index == audioStream) {
+        if(packet.stream_index == audioStream) {
         aCodecCtx->request_sample_fmt = AV_SAMPLE_FMT_S16;
         while(avcodec_decode_audio4(aCodecCtx, aFrame, &aframe_finished, &packet) > 0) {
             if(aframe_finished) {

@@ -31,8 +31,10 @@
 void SystemClock_Config(void);
 void CPU_CACHE_Enable(void);
 
+#ifdef RTOS_HEAP_IN_IRAM
 #pragma location = "__iram"
 uint8_t ucHeap[configTOTAL_HEAP_SIZE];
+#endif /* RTOS_HEAP_IN_IRAM */
 
 int main(void)
 {
@@ -279,16 +281,16 @@ void __iar_file_Mtxunlock(__iar_Rmtx *m)
 {
     xSemaphoreGiveRecursive(*m);
 }
-#endif // _DLIB_THREAD_SUPPORT
+#endif /* _DLIB_THREAD_SUPPORT */
 
-#if !configAPPLICATION_ALLOCATED_HEAP
-void *pvPortMalloc(size_t xWantedSize)
+#ifndef RTOS_HEAP_IN_IRAM
+void *pvPortMalloc(size_t size)
 {
-  return malloc(xWantedSize);
+  return malloc(size);
 }
 
-void vPortFree(void *pv)
+void vPortFree(void *p)
 {
-  free(pv);
+  free(p);
 }
-#endif // configAPPLICATION_ALLOCATED_HEAP
+#endif /* RTOS_HEAP_IN_IRAM */

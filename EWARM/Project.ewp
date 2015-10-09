@@ -1124,7 +1124,7 @@
         </option>
         <option>
           <name>GRuntimeLibThreads</name>
-          <state>1</state>
+          <state>0</state>
         </option>
         <option>
           <name>CoreVariant</name>
@@ -1234,7 +1234,7 @@
         <option>
           <name>CCAllowList</name>
           <version>1</version>
-          <state>10010100</state>
+          <state>10010110</state>
         </option>
         <option>
           <name>CCDebugInfo</name>
@@ -1350,7 +1350,7 @@
         </option>
         <option>
           <name>CCOptLevel</name>
-          <state>2</state>
+          <state>3</state>
         </option>
         <option>
           <name>CCOptStrategy</name>
@@ -1359,7 +1359,7 @@
         </option>
         <option>
           <name>CCOptLevelSlave</name>
-          <state>2</state>
+          <state>3</state>
         </option>
         <option>
           <name>CompilerMisraRules98</name>
@@ -3253,24 +3253,15 @@
         </file>
         <file>
           <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\portable\MemMang\heap_4.c</name>
+          <excluded>
+            <configuration>ffmpeg</configuration>
+          </excluded>
         </file>
         <file>
           <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\portable\IAR\ARM_CM7\r0p1\port.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\portable\GCC\ARM_CM3_MPU\port.c</name>
-          <excluded>
-            <configuration>ffmpeg</configuration>
-          </excluded>
-        </file>
-        <file>
           <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\portable\IAR\ARM_CM7\r0p1\portasm.s</name>
-        </file>
-        <file>
-          <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\portable\GCC\ARM_CM3_MPU\portmacro.h</name>
-          <excluded>
-            <configuration>ffmpeg</configuration>
-          </excluded>
         </file>
       </group>
       <file>
