@@ -1,0 +1,111 @@
+[Stack]
+FillEnabled=0
+OverflowWarningsEnabled=1
+WarningThreshold=90
+SpWarningsEnabled=1
+WarnLogOnly=1
+UseTrigger=1
+TriggerName=main
+LimitSize=0
+ByteLimit=50
+[stlink]
+stlinkserialNo=114C5BB8
+stlinkfoundProbes=
+[DebugChecksum]
+Checksum=-369033568
+[Exceptions]
+StopOnUncaught=_ 0
+StopOnThrow=_ 0
+[CodeCoverage]
+Enabled=_ 0
+[CallStack]
+ShowArgs=1
+[Disassembly]
+MixedMode=1
+[SWOTraceHWSettings]
+OverrideDefaultClocks=0
+CpuClock=200000000
+ClockAutoDetect=1
+ClockWanted=2000000
+JtagSpeed=2000000
+Prescaler=100
+TimeStampPrescIndex=0
+TimeStampPrescData=0
+PcSampCYCTAP=1
+PcSampPOSTCNT=15
+PcSampIndex=0
+DataLogMode=0
+ITMportsEnable=0
+ITMportsTermIO=0
+ITMportsLogFile=0
+ITMlogFile=$PROJ_DIR$\ITM.log
+[RegisterFilter]
+FilePath=_ ""
+UseFilter=_ 0
+[struct_types]
+Fmt0=DMA_Stream_TypeDef-CR	4	0
+Fmt1=DMA_Stream_TypeDef-M0AR	4	0
+Fmt2=DMA_Stream_TypeDef-M1AR	4	0
+Fmt3=SAI_Block_TypeDef-CR1	4	0
+Fmt4=xMPU_REGION_REGISTERS-ulRegionAttribute	4	0
+Fmt5=xMPU_REGION_REGISTERS-ulRegionBaseAddress	4	0
+[watch_formats]
+Fmt0={W}1:pFrameRGB->linesize[0]	4	0
+[Trace2]
+Enabled=0
+ShowSource=0
+[SWOTraceWindow]
+PcSampling=0
+InterruptLogs=0
+ForcedTimeStamps=0
+EventCPI=0
+EventEXC=0
+EventFOLD=0
+EventLSU=0
+EventSLEEP=0
+[DataLog]
+LogEnabled=0
+GraphEnabled=0
+ShowTimeLog=1
+SumEnabled=0
+ShowTimeSum=1
+[InterruptLog]
+LogEnabled=0
+GraphEnabled=0
+ShowTimeLog=1
+SumEnabled=0
+ShowTimeSum=1
+SumSortOrder=0
+[Disassemble mode]
+mode=0
+[Breakpoints2]
+Bp0=_ 0 "EMUL_CODE" "0x9012C21E" 0 0 1 "" 0 "" 0
+Bp1=_ 0 "EMUL_CODE" "0x90137FD2" 0 0 1 "" 0 "" 0
+Bp2=_ 0 "EMUL_CODE" "0x90187C60" 0 0 1 "" 0 "" 0
+Bp3=_ 0 "EMUL_CODE" "0x901BD5BC" 0 0 1 "" 0 "" 0
+Bp4=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\play.c}.492.5" 0 0 1 "" 0 "" 0
+Bp5=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\play.c}.626.5" 0 0 1 "" 0 "" 0
+Bp6=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\play.c}.570.7" 0 0 1 "" 0 "" 0
+Bp7=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\play.c}.379.9" 0 0 1 "" 0 "" 0
+Bp8=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\play.c}.387.5" 0 0 1 "" 0 "" 0
+Count=9
+[Log file]
+LoggingEnabled=_ 0
+LogFile=_ ""
+Category=_ 0
+[TermIOLog]
+LoggingEnabled=_ 0
+LogFile=_ ""
+[Aliases]
+Count=0
+SuppressDialog=0
+[DriverProfiling]
+Enabled=1
+Mode=3
+Graph=1
+Symbiont=0
+Exclusions=
+[CallStackLog]
+Enabled=0
+[CallStackStripe]
+ShowTiming=1
