@@ -20,7 +20,7 @@ define symbol __ICFEDIT_size_dtcm__= 0x10000;
 
 /*-Sizes-*/
 define symbol __ICFEDIT_size_cstack__ = 0x200;
-define symbol __ICFEDIT_size_heap__   = 0x540000;
+define symbol __ICFEDIT_size_heap__   = 0x546000;
 /**** End of ICF editor section. ###ICF###*/
 
 
@@ -43,12 +43,14 @@ place at address mem:__ICFEDIT_intvec_start__ { readonly section .intvec };
 
 define block LIB_CODE with alignment = 4 {
     readonly object libavcodec.a,
+/*
     readonly object libavdevice.a,
     readonly object libavfilter.a,
     readonly object libavformat.a,
     readonly object libavutil.a,
     readonly object libswresample.a,
     readonly object liblibswscale.a
+*/
 };
 
 /*

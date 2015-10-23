@@ -1,5 +1,5 @@
 PLATFORM=~/Projects/gcc-arm-none-eabi-4_9-2015q2 && \
-PREBUILT=~/Projects/gcc-arm-none-eabi-4_9-2015q2/arm-none-eabi && \
+PREBUILT=$PLATFORM/arm-none-eabi && \
  ./configure \
     --prefix=$PREFIX \
     --target-os=none \
@@ -25,6 +25,6 @@ PREBUILT=~/Projects/gcc-arm-none-eabi-4_9-2015q2/arm-none-eabi && \
     --arch=arm \
     --cpu=cortex-m7 \
     --enable-thumb \
-    --extra-cflags="-O2 -mthumb -mfloat-abi=softfp -mfpu=fpv4-sp-d16 -fshort-wchar -fomit-frame-pointer -fstack-usage"\
-    --extra-ldflags="-L$PREBUILT/lib/armv7e-m/softfp -nostdlib -lc -lm"
+    --extra-cflags="-Os -mthumb -mfloat-abi=softfp -mfpu=fpv4-sp-d16 -fshort-wchar -fomit-frame-pointer -I$PREBUILT -mlong-calls" \
+    --extra-ldflags="-L$PREBUILT/lib/armv7e-m/softfp -lc -lm -nostdlib"
 

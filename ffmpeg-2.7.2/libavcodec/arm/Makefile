@@ -84,7 +84,7 @@ ARMV6-OBJS-$(CONFIG_VP7_DECODER)       += arm/vp8_armv6.o               \
 ARMV6-OBJS-$(CONFIG_VP8_DECODER)       += arm/vp8_armv6.o               \
                                           arm/vp8dsp_init_armv6.o       \
                                           arm/vp8dsp_armv6.o
-
+ARMV6-OBJS-$(CONFIG_CABAC)             += arm/cabac_armv6.o
 
 # VFP optimizations
 

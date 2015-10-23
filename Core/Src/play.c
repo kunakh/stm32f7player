@@ -44,15 +44,15 @@
 #define FRAME_BUFFER_SIZE   (LCD_X_SIZE * LCD_Y_SIZE * 2) // rgb565
 
 #define READER_TASK_PRIORITY  8
-#define READER_TASK_STACK     (10*1024)
+#define READER_TASK_STACK     (5*1024)
 
 #define AUDIO_TASK_STACK      (256)
-#define AUDIO_TASK_PRIORITY   7
+#define AUDIO_TASK_PRIORITY   9
 #define VIDEO_TASK_STACK      (256)
 #define VIDEO_TASK_PRIORITY   9
 
-#define AUDIO_QUEUE_LENGTH    64
-#define VIDEO_QUEUE_LENGTH    8
+#define AUDIO_QUEUE_LENGTH    16
+#define VIDEO_QUEUE_LENGTH    2
 
 #define AUDIO_SEMA_TIMEOUT    2000
 #define AV_START_DELAY        1
@@ -349,17 +349,17 @@ static void log_cb(void* ptr, int level, const char* fmt, va_list vl)
 static void audio_task_cb(void *arg)
 {
   av_queue_t m[2] = {0};
-  vTaskDelay(portMAX_DELAY/*AV_START_DELAY*/);
+  vTaskDelay(AV_START_DELAY);
 
   while(1) {
     free(m[0].data);
     xQueueReceive(audio_queue, &m[0], portMAX_DELAY);
-    BSP_AUDIO_OUT_PlayNext((uint16_t*)m[0].data, m[0].size);
-    xSemaphoreTake(audio_sema, AUDIO_SEMA_TIMEOUT);
+//    BSP_AUDIO_OUT_PlayNext((uint16_t*)m[0].data, m[0].size);
+//    xSemaphoreTake(audio_sema, AUDIO_SEMA_TIMEOUT);
     free(m[1].data);
     xQueueReceive(audio_queue, &m[1], portMAX_DELAY);
-    BSP_AUDIO_OUT_PlayNext((uint16_t*)m[1].data, m[1].size);
-    xSemaphoreTake(audio_sema, AUDIO_SEMA_TIMEOUT);
+//    BSP_AUDIO_OUT_PlayNext((uint16_t*)m[1].data, m[1].size);
+//    xSemaphoreTake(audio_sema, AUDIO_SEMA_TIMEOUT);
   }
 }
 
@@ -562,7 +562,10 @@ static void reader_task_cb(void *arg)
 
     BSP_AUDIO_OUT_Init(OUTPUT_DEVICE_AUTO, 25, get_audio_freq(aCodecCtx->sample_rate));
 
-    xTimerChangePeriod(video_timer, vCodecCtx->pkt_timebase.den/vCodecCtx->pkt_timebase.num, 0);
+    int framerate = vCodecCtx->framerate.num ?
+      vCodecCtx->framerate.den * 1000 / vCodecCtx->framerate.num :
+      vCodecCtx->pkt_timebase.den/vCodecCtx->pkt_timebase.num;
+    xTimerChangePeriod(video_timer, framerate, 0);
     xTimerStart(video_timer, 0);
 
     while(av_read_frame(pFormatCtx, &packet) >= 0) {

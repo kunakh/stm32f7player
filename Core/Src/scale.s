@@ -1,3 +1,10 @@
+/*
+ * @file    scale.s
+ * @author  Peter Kunakh
+ * @version 1.0
+ * @date    1-October-2015
+ * @brief   This file scaling YCbCr42x to RGB565
+ */
 
         RSEG    CODE:CODE(2)
         THUMB
@@ -75,7 +82,7 @@ L48:
         MOV     R6, R7
         MOV.W   R11, #74
         MVN.W   R12, #24
-La8:
+ScaleYUV2RGB565Row:
         ADD.W   R7, R2, LR, LSR #16
         LDRB.W  R8, [R7]
         LSR.W   R7, LR, #17
@@ -125,7 +132,7 @@ La8:
         ORR.W   R10, R10, R7, LSL #5
         STRH.W  R10, [R4], #0x2
         SUBS    R6, #2
-        BNE.N   La8
+        BNE.N   ScaleYUV2RGB565Row
         LDR     R3, [SP, #0x4]
         LDR     R2, [SP, #0x8]
         ADDS    R3, #1

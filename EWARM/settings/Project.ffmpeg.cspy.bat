@@ -25,7 +25,7 @@ if not "%1" == "" goto debugFile
 
 @echo on 
 
-"C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.2\common\bin\cspybat" -f "C:\Users\kunakh\Documents\iar\stm32f7_copy\projects\STM32746G-Discovery\ffmpeg\EWARM\settings\Project.ffmpeg.general.xcl" --backend -f "C:\Users\kunakh\Documents\iar\stm32f7_copy\projects\STM32746G-Discovery\ffmpeg\EWARM\settings\Project.ffmpeg.driver.xcl" 
+"C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.2\common\bin\cspybat" -f "C:\Users\kunakh\Documents\iar\stm32f7_copy\projects\STM32746G-Discovery\stm32f7player\EWARM\settings\Project.ffmpeg.general.xcl" --backend -f "C:\Users\kunakh\Documents\iar\stm32f7_copy\projects\STM32746G-Discovery\stm32f7player\EWARM\settings\Project.ffmpeg.driver.xcl" 
 
 @echo off 
 goto end 
@@ -34,7 +34,7 @@ goto end
 
 @echo on 
 
-"C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.2\common\bin\cspybat" -f "C:\Users\kunakh\Documents\iar\stm32f7_copy\projects\STM32746G-Discovery\ffmpeg\EWARM\settings\Project.ffmpeg.general.xcl" "--debug_file=%1" --backend -f "C:\Users\kunakh\Documents\iar\stm32f7_copy\projects\STM32746G-Discovery\ffmpeg\EWARM\settings\Project.ffmpeg.driver.xcl" 
+"C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.2\common\bin\cspybat" -f "C:\Users\kunakh\Documents\iar\stm32f7_copy\projects\STM32746G-Discovery\stm32f7player\EWARM\settings\Project.ffmpeg.general.xcl" "--debug_file=%1" --backend -f "C:\Users\kunakh\Documents\iar\stm32f7_copy\projects\STM32746G-Discovery\stm32f7player\EWARM\settings\Project.ffmpeg.driver.xcl" 
 
 @echo off 
 :end

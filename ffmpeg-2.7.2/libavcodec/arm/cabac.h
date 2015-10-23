@@ -27,6 +27,7 @@
 #include "libavcodec/cabac.h"
 
 #define get_cabac_inline get_cabac_inline_arm
+#if 0
 static av_always_inline int get_cabac_inline_arm(CABACContext *c,
                                                  uint8_t *const state)
 {
@@ -103,6 +104,9 @@ static av_always_inline int get_cabac_inline_arm(CABACContext *c,
 
     return bit & 1;
 }
+#else
+int get_cabac_inline_arm(CABACContext *c, uint8_t *const state);
+#endif
 #endif /* HAVE_ARMV6T2_INLINE */
 
 #endif /* AVCODEC_ARM_CABAC_H */

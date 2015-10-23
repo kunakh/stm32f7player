@@ -74,6 +74,8 @@
   ******************************************************************************
   */
 
+#define BSP_SD_DMA
+
 /* Includes ------------------------------------------------------------------*/
 #include "stm32746g_discovery_sd.h"
 #include "cmsis_os.h"
@@ -271,32 +273,39 @@ uint8_t BSP_SD_ReadBlocks(uint32_t *pData, uint64_t ReadAddr, uint32_t BlockSize
     return MSD_OK;
   }
 }
+
 #else
+
+#include <stdlib.h>
+#include <string.h>
+extern void *memalign(size_t align, size_t size);
+
 uint8_t BSP_SD_ReadBlocks(uint32_t *pData, uint64_t ReadAddr, uint32_t BlockSize, uint32_t NumOfBlocks)
 {
+  uint8_t res = MSD_OK;
   int allocated;
-  BYTE *buff_;
-  int32_t size;
+  uint32_t *buff;
+  uint32_t size;
 
   // Check alignment
-  if(((uint32_t)pData & CACHE_LINE_MASK) != 0) {
+  if(((uint32_t)pData & 3) != 0) {
     size = BlockSize * NumOfBlocks;
-    buff_ = memalign(CACHE_LINE, size);
+    buff = memalign(4, size);
     allocated = 1;
   } else {
-    buff_ = pData;
+    buff = pData;
     allocated = 0;
   }
 
-  if(BSP_SD_ReadBlocks_DMA((uint32_t*)buff_, ReadAddr, BlockSize, NumOfBlocks)
+  if(BSP_SD_ReadBlocks_DMA((uint32_t*)buff, ReadAddr, BlockSize, NumOfBlocks)
      != MSD_OK)
   {
-    res = RES_ERROR;
+    res = MSD_ERROR;
   }
 
   if(allocated) {
-    memcpy(buff, buff_, size);
-    free(buff_);
+    memcpy(pData, buff, size);
+    free(buff);
   }
   return res;
 }

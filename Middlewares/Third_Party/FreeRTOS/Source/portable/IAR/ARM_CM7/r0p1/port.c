@@ -763,7 +763,7 @@ static void prvSetupMPU( void )
 										( portMPU_REGION_VALID ) |
 										( portGENERAL_PERIPHERALS_REGION );
 
-		*portMPU_REGION_ATTRIBUTE =		( portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER ) |
+		*portMPU_REGION_ATTRIBUTE =		( portMPU_REGION_PRIVILEGED_READ_WRITE/*portMPU_REGION_READ_WRITE*/ | portMPU_REGION_EXECUTE_NEVER ) |
 										( prvGetMPURegionSizeSetting( portPERIPHERALS_END_ADDRESS - portPERIPHERALS_START_ADDRESS ) ) |
 										( portMPU_REGION_ENABLE );
 

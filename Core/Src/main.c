@@ -62,7 +62,6 @@ int main(void)
   osKernelStart ();
 }
 
-#define CLK_200MHZ
 #ifdef CLK_200MHZ
 /**
   * @brief  System Clock Configuration
