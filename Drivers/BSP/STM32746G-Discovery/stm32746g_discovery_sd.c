@@ -259,6 +259,7 @@ uint8_t BSP_SD_IsDetected(void)
   * @param  NumOfBlocks: Number of SD blocks to read
   * @retval SD status
   */
+#ifndef BSP_SD_DMA
 uint8_t BSP_SD_ReadBlocks(uint32_t *pData, uint64_t ReadAddr, uint32_t BlockSize, uint32_t NumOfBlocks)
 {
   if(HAL_SD_ReadBlocks(&uSdHandle, pData, ReadAddr, BlockSize, NumOfBlocks) != SD_OK)
@@ -270,6 +271,36 @@ uint8_t BSP_SD_ReadBlocks(uint32_t *pData, uint64_t ReadAddr, uint32_t BlockSize
     return MSD_OK;
   }
 }
+#else
+uint8_t BSP_SD_ReadBlocks(uint32_t *pData, uint64_t ReadAddr, uint32_t BlockSize, uint32_t NumOfBlocks)
+{
+  int allocated;
+  BYTE *buff_;
+  int32_t size;
+
+  // Check alignment
+  if(((uint32_t)pData & CACHE_LINE_MASK) != 0) {
+    size = BlockSize * NumOfBlocks;
+    buff_ = memalign(CACHE_LINE, size);
+    allocated = 1;
+  } else {
+    buff_ = pData;
+    allocated = 0;
+  }
+
+  if(BSP_SD_ReadBlocks_DMA((uint32_t*)buff_, ReadAddr, BlockSize, NumOfBlocks)
+     != MSD_OK)
+  {
+    res = RES_ERROR;
+  }
+
+  if(allocated) {
+    memcpy(buff, buff_, size);
+    free(buff_);
+  }
+  return res;
+}
+#endif /* BSP_SD_DMA */
 
 /**
   * @brief  Writes block(s) to a specified address in an SD card, in polling mode.

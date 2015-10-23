@@ -6,12 +6,17 @@ define symbol __ICFEDIT_intvec_start__ = 0x08000000;
 /*-Memory Regions-*/
 define symbol __ICFEDIT_region_IROM_start__  = 0x08000000;
 define symbol __ICFEDIT_region_IROM_end__    = 0x080FFFFF;
-define symbol __ICFEDIT_region_SDRAM_start__ = 0xC0000000;
-define symbol __ICFEDIT_region_SDRAM_end__   = 0xC07FFFFF;
 define symbol __ICFEDIT_region_IRAM_start__  = 0x20000000;
 define symbol __ICFEDIT_region_IRAM_end__    = 0x2004FFFF;
+define symbol __ICFEDIT_region_SDRAM_start__ = 0xC0000000;
+define symbol __ICFEDIT_region_SDRAM_end__   = 0xC07FFFFF;
 define symbol __ICFEDIT_region_QSPI_start__  = 0x90000000;
 define symbol __ICFEDIT_region_QSPI_end__    = 0x90FFFFFF;
+
+define symbol __ICFEDIT_region_ITCM_start__= 0x00000000;
+define symbol __ICFEDIT_region_DTCM_start__= 0x20000000;
+define symbol __ICFEDIT_size_itcm__= 0x3FFF;
+define symbol __ICFEDIT_size_dtcm__= 0x10000;
 
 /*-Sizes-*/
 define symbol __ICFEDIT_size_cstack__ = 0x200;
@@ -25,6 +30,8 @@ define region IRAM_region     = mem:[from __ICFEDIT_region_IRAM_start__ to __ICF
 define region QSPI_region     = mem:[from __ICFEDIT_region_QSPI_start__ to __ICFEDIT_region_QSPI_end__];
 define region ROM_region      = IROM_region-QSPI_region;
 define region SDRAM_region    = mem:[from __ICFEDIT_region_SDRAM_start__  to __ICFEDIT_region_SDRAM_end__];
+define region ITCM_region = mem:[from __ICFEDIT_region_ITCM_start__ size __ICFEDIT_size_itcm__];
+define region DTCM_region = mem:[from __ICFEDIT_region_DTCM_start__ size __ICFEDIT_size_dtcm__];
 
 define block CSTACK    with alignment = 8, size = __ICFEDIT_size_cstack__   { };
 define block HEAP      with alignment = 8, size = __ICFEDIT_size_heap__     { };
@@ -34,8 +41,7 @@ do not initialize  { section .noinit };
 
 place at address mem:__ICFEDIT_intvec_start__ { readonly section .intvec };
 
-define block LIB_CODE
-{
+define block LIB_CODE with alignment = 4 {
     readonly object libavcodec.a,
     readonly object libavdevice.a,
     readonly object libavfilter.a,
@@ -46,16 +52,24 @@ define block LIB_CODE
 };
 
 /*
-define block FAST_CODE
+define block ITCM_BLOCK
 {
-    readonly object scale.o
+    readwrite object scale.o
 };
+
+define block DTCM_BLOCK
+{
+    zi object scale.o
+};
+
+place in ITCM_region { section __itcmram, block ITCM_BLOCK };
+place in DTCM_region { section __dtcmram, block DTCM_BLOCK };
+initialize by copy { object scale.o };
 */
 
 place in ROM_region   { readonly };
 place in SDRAM_region { readwrite, block CSTACK, block HEAP };
 place in IRAM_region  { section __iram };
-
 place at address mem:__ICFEDIT_region_QSPI_start__ { readonly section .qspi, block LIB_CODE };
 
 export symbol __ICFEDIT_region_IROM_start__;

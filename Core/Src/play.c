@@ -43,25 +43,29 @@
 #define LCD_Y_SIZE          RK043FN48H_HEIGHT
 #define FRAME_BUFFER_SIZE   (LCD_X_SIZE * LCD_Y_SIZE * 2) // rgb565
 
-#define READER_TASK_PRIORITY  5
+#define READER_TASK_PRIORITY  8
 #define READER_TASK_STACK     (10*1024)
 
 #define AUDIO_TASK_STACK      (256)
-#define AUDIO_TASK_PRIORITY   6
+#define AUDIO_TASK_PRIORITY   7
 #define VIDEO_TASK_STACK      (256)
-#define VIDEO_TASK_PRIORITY   7
+#define VIDEO_TASK_PRIORITY   9
 
-#define AUDIO_QUEUE_LENGTH    32
-#define VIDEO_QUEUE_LENGTH    4
+#define AUDIO_QUEUE_LENGTH    64
+#define VIDEO_QUEUE_LENGTH    8
 
 #define AUDIO_SEMA_TIMEOUT    2000
-#define AV_START_DELAY        2000
+#define AV_START_DELAY        1
 
 #define countof(a)  (sizeof(a)/sizeof(a[0]))
 
 #pragma location = "__iram"
 #pragma data_alignment=32
 uint32_t reader_task_stack[READER_TASK_STACK];
+
+#pragma location = "__iram"
+#pragma data_alignment=32
+uint32_t video_task_stack[VIDEO_TASK_STACK];
 
 typedef struct {
     uint8_t *data;
@@ -72,7 +76,7 @@ static QueueHandle_t        audio_queue;
 static QueueHandle_t        video_queue;
 
 static TaskHandle_t         audio_task;
-static TaskHandle_t         video_task;
+//static TaskHandle_t         video_task;
 
 static SemaphoreHandle_t    audio_sema;
 static SemaphoreHandle_t    video_sema;
@@ -90,27 +94,80 @@ void *_impure_ptr = NULL;
 extern void* __iar_dlmemalign(uint32_t, uint32_t);
 void *memalign(size_t align, size_t size)
 {
-//  printf("[%s] size: %d\n", __FUNCTION__, size);
-  return __iar_dlmemalign(align, size);
+  void * p = __iar_dlmemalign(align, size);
+  if(!p)
+    printf("[%s] Can't allocate %d bytes\n", __FUNCTION__, size);
+  return p;
 }
+#if 0
+typedef struct {
+  int   tm_sec;
+  int   tm_min;
+  int   tm_hour;
+  int   tm_mday;
+  int   tm_mon;
+  int   tm_year;
+  int   tm_wday;
+  int   tm_yday;
+  int   tm_isdst;
+} ff_tm;
 
-struct tm *localtime_r(const time_t* t, struct tm *r)
+ff_tm *localtime_r(const time_t* t, ff_tm *r)
 {
-    struct tm *p = localtime(t);
+  printf("[%s]\n", __FUNCTION__);
+    ff_tm *p = (ff_tm*)localtime(t);
     if (!p)
         return NULL;
     *r = *p;
     return r;
 }
 
-struct tm *gmtime_r(const time_t* t, struct tm *r)
+ff_tm *gmtime_r(const time_t* t, ff_tm *r)
 {
-    struct tm *p = gmtime(t);
+  printf("[%s]\n", __FUNCTION__);
+    ff_tm *p = (ff_tm*)gmtime(t);
     if (!p)
         return NULL;
     *r = *p;
     return r;
 }
+
+int	__xpg_strerror_r(int a, char *s, size_t len)
+{
+  printf("[%s]\n", __FUNCTION__);
+  return -1;
+}
+
+int gettimeofday(struct timeval *p, void *tz)
+{
+  printf("[%s]\n", __FUNCTION__);
+  return -1;
+}
+
+int fcntl (int fd, int cmd, int arg)
+{
+  printf("[%s]\n", __FUNCTION__);
+  return -1;
+}
+
+int access(const char *path, int amode)
+{
+  printf("[%s]\n", __FUNCTION__);
+  return -1;
+}
+
+int	mkstemp(char *s)
+{
+  printf("[%s]\n", __FUNCTION__);
+  return -1;
+}
+
+int	isatty(int fildes)
+{
+  printf("[%s]\n", __FUNCTION__);
+  return -1;
+}
+#endif //0
 
 int __errno(int e)
 {
@@ -120,11 +177,13 @@ int __errno(int e)
 
 int __fpclassifyf (float x)
 {
+//  printf("[%s]\n", __FUNCTION__);
     return fpclassify(x);
 }
 
 int __fpclassifyd (double x)
 {
+//  printf("[%s]\n", __FUNCTION__);
     return fpclassify(x);
 }
 
@@ -232,6 +291,7 @@ int fstat(int fd, struct stat *buf)
 #define	SEEK_END	2
 long lseek(int fd, long offset, int whence)
 {
+//  printf("[%s]\n", __FUNCTION__);
   static int cur = 0;
   if(whence == SEEK_CUR)
     offset += cur;
@@ -289,7 +349,7 @@ static void log_cb(void* ptr, int level, const char* fmt, va_list vl)
 static void audio_task_cb(void *arg)
 {
   av_queue_t m[2] = {0};
-  vTaskDelay(AV_START_DELAY);
+  vTaskDelay(portMAX_DELAY/*AV_START_DELAY*/);
 
   while(1) {
     free(m[0].data);
@@ -317,7 +377,7 @@ static void video_task_cb(void *arg)
 {
   av_queue_t m;
   void *data_prev = NULL;
-  vTaskDelay(AV_START_DELAY);
+//  vTaskDelay(AV_START_DELAY);
 
   BSP_LCD_LayerRgb565Init(0, (uint32_t)0);
   BSP_LCD_DisplayOn();
@@ -372,7 +432,7 @@ static void reader_task_cb(void *arg)
     mount_sdcard();
     open("test2.mp4", 0);
 
-    char *buff = memalign(4, 32768);
+    char *buff = memalign(CACHE_LINE, 32768);
     printf("buff: %x\n", buff);
 
     size_t size = 0, sz;
@@ -422,13 +482,14 @@ static void reader_task_cb(void *arg)
     }
     pFormatCtx->interrupt_callback.callback = decode_interrupt_cb;
     pFormatCtx->interrupt_callback.opaque = NULL;
+#if 0
     if (!av_dict_get(format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE)) {
         av_dict_set(&format_opts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
     }
-
+#endif
     mount_sdcard();
 
-    if(avformat_open_input(&pFormatCtx, filename, NULL, &format_opts) != 0)
+    if(avformat_open_input(&pFormatCtx, filename, NULL, NULL/*&format_opts*/) != 0)
        Error_Handler();
 
     if(avformat_find_stream_info(pFormatCtx, NULL/*&format_opts*/) < 0)
@@ -470,14 +531,14 @@ static void reader_task_cb(void *arg)
       Error_Handler(); // Codec not found
     }
 
-    // Copy context
+    // Copy video context
     AVCodecContext *vCodecCtx = avcodec_alloc_context3(vCodec);
     if(avcodec_copy_context(vCodecCtx, vCodecCtxOrig) != 0) {
       printf("Couldn't copy video codec context");
       Error_Handler(); // Error copying codec context
     }
 
-    // Copy context
+    // Copy audio context
     AVCodecContext *aCodecCtx = avcodec_alloc_context3(aCodec);
     if(avcodec_copy_context(aCodecCtx, aCodecCtxOrig) != 0) {
       printf("Couldn't copy audio codec context");
@@ -485,7 +546,7 @@ static void reader_task_cb(void *arg)
     }
 
     // Open codec
-    if(avcodec_open2(vCodecCtx, vCodec, &format_opts) < 0 ||
+    if(avcodec_open2(vCodecCtx, vCodec, NULL/*&format_opts*/) < 0 ||
        avcodec_open2(aCodecCtx, aCodec, NULL))
       Error_Handler(); // Could not open codec
 
@@ -586,6 +647,15 @@ TaskParameters_t reader_task_param = {
   .xRegions = {NULL}
 };
 
+TaskParameters_t video_task_param = {
+  .pvTaskCode = video_task_cb,
+  .pcName = "video_task",
+  .usStackDepth = VIDEO_TASK_STACK,
+  .uxPriority = VIDEO_TASK_PRIORITY,
+  .puxStackBuffer = video_task_stack,
+  .xRegions = {NULL}
+};
+
 int play_init(void)
 {
     // LCD Init
@@ -607,9 +677,10 @@ int play_init(void)
     ASSERT(audio_task);
 
     // Create video task
-    xTaskCreate(video_task_cb, "video_task", VIDEO_TASK_STACK, NULL,
-                VIDEO_TASK_PRIORITY, &video_task);
-    ASSERT(video_task);
+//    xTaskCreate(video_task_cb, "video_task", VIDEO_TASK_STACK, NULL,
+//                VIDEO_TASK_PRIORITY, &video_task);
+//    ASSERT(video_task);
+    xTaskCreateRestricted(&video_task_param, NULL);
 
     // Create video task timer
     video_timer = xTimerCreate("video_timer", 10, pdTRUE, NULL, video_timer_cb);

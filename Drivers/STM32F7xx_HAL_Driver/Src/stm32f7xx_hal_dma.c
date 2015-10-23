@@ -155,7 +155,7 @@ static void DMA_SetConfig(DMA_HandleTypeDef *hdma, uint32_t SrcAddress, uint32_t
 static void DMA_SetConfig(DMA_HandleTypeDef *hdma, uint32_t SrcAddress, uint32_t DstAddress, uint32_t DataLength)
 {
   /* Clear DBM bit */
-  if(hdma->Init.Mode != DMA_SxCR_DBM)
+  if((hdma->Init.Mode & DMA_SxCR_DBM) == 0)
     hdma->Instance->CR &= (uint32_t)(~DMA_SxCR_DBM);
 
   /* Configure DMA Stream data length */

@@ -245,9 +245,6 @@ void BSP_AUDIO_OUT_PlayNext(uint16_t* pBuffer, uint32_t Size)
     return;
   }
 
-//  haudio_out_sai.hdmatx->Instance->NDTR = Size >> 1;
-//  haudio_out_sai.hdmatx->Instance->CR |= DMA_SxCR_DBM;
-//  haudio_out_sai.hdmatx->Instance->PAR = haudio_out_sai.Instance->DR;
   if((haudio_out_sai.hdmatx->Instance->CR & DMA_SxCR_CT) != 0)
     haudio_out_sai.hdmatx->Instance->M0AR = (uint32_t)pBuffer;
   else

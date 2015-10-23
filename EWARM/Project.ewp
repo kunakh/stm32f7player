@@ -1089,7 +1089,7 @@
         </option>
         <option>
           <name>GenStdoutInterface</name>
-          <state>1</state>
+          <state>0</state>
         </option>
         <option>
           <name>GeneralMisraRules98</name>
@@ -1234,7 +1234,7 @@
         <option>
           <name>CCAllowList</name>
           <version>1</version>
-          <state>10010110</state>
+          <state>10010100</state>
         </option>
         <option>
           <name>CCDebugInfo</name>
@@ -1255,6 +1255,8 @@
         <option>
           <name>IExtraOptions</name>
           <state>--diag_suppress Pa050</state>
+          <state>--aeabi</state>
+          <state>--guard_calls</state>
         </option>
         <option>
           <name>CCLangConformance</name>
@@ -1350,7 +1352,7 @@
         </option>
         <option>
           <name>CCOptLevel</name>
-          <state>3</state>
+          <state>2</state>
         </option>
         <option>
           <name>CCOptStrategy</name>
@@ -1359,7 +1361,7 @@
         </option>
         <option>
           <name>CCOptLevelSlave</name>
-          <state>3</state>
+          <state>2</state>
         </option>
         <option>
           <name>CompilerMisraRules98</name>
@@ -2014,6 +2016,9 @@
         </file>
         <file>
           <name>$PROJ_DIR$\..\Core\Src\k_storage.c</name>
+          <excluded>
+            <configuration>ffmpeg</configuration>
+          </excluded>
         </file>
         <file>
           <name>$PROJ_DIR$\..\Core\Src\main.c</name>
@@ -2022,299 +2027,10 @@
           <name>$PROJ_DIR$\..\Core\Src\play.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\Core\Src\scale.c</name>
-          <excluded>
-            <configuration>ffmpeg</configuration>
-          </excluded>
+          <name>$PROJ_DIR$\..\Core\Src\scale.s</name>
         </file>
         <file>
           <name>$PROJ_DIR$\..\Core\Src\stm32f7xx_it.c</name>
-        </file>
-        <file>
-          <name>$PROJ_DIR$\..\Core\Src\test.c</name>
-          <excluded>
-            <configuration>ffmpeg</configuration>
-          </excluded>
-          <configuration>
-            <name>ffmpeg</name>
-            <settings>
-              <name>ICCARM</name>
-              <data>
-                <version>31</version>
-                <wantNonLocal>0</wantNonLocal>
-                <debug>1</debug>
-                <option>
-                  <name>CCOptimizationNoSizeConstraints</name>
-                  <state>0</state>
-                </option>
-                <option>
-                  <name>CCDefines</name>
-                  <state>STM32F756xx</state>
-                  <state>USE_HAL_DRIVER</state>
-                  <state>USE_STM32746G_DISCOVERY</state>
-                  <state>ARM_MATH_CM7</state>
-                  <state>DATA_IN_ExtSDRAM</state>
-                </option>
-                <option>
-                  <name>CCPreprocFile</name>
-                  <state>0</state>
-                </option>
-                <option>
-                  <name>CCPreprocComments</name>
-                  <state>0</state>
-                </option>
-                <option>
-                  <name>CCPreprocLine</name>
-                  <state>0</state>
-                </option>
-                <option>
-                  <name>CCListCFile</name>
-                  <state>0</state>
-                </option>
-                <option>
-                  <name>CCListCMnemonics</name>
-                  <state>0</state>
-                </option>
-                <option>
-                  <name>CCListCMessages</name>
-                  <state>0</state>
-                </option>
-                <option>
-                  <name>CCListAssFile</name>
-                  <state>0</state>
-                </option>
-                <option>
-                  <name>CCListAssSource</name>
-                  <state>0</state>
-                </option>
-                <option>
-                  <name>CCEnableRemarks</name>
-                  <state>0</state>
-                </option>
-                <option>
-                  <name>CCDiagSuppress</name>
-                  <state></state>
-                </option>
-                <option>
-                  <name>CCDiagRemark</name>
-                  <state></state>
-                </option>
-                <option>
-                  <name>CCDiagWarning</name>
-                  <state></state>
-                </option>
-                <option>
-                  <name>CCDiagError</name>
-                  <state></state>
-                </option>
-                <option>
-                  <name>CCObjPrefix</name>
-                  <state>1</state>
-                </option>
-                <option>
-                  <name>CCAllowList</name>
-                  <version>1</version>
-                  <state>11111110</state>
-                </option>
-                <option>
-                  <name>CCDebugInfo</name>
-                  <state>1</state>
-                </option>
-                <option>
-                  <name>IEndianMode</name>
-                  <state>1</state>
-                </option>
-                <option>
-                  <name>IProcessor</name>
-                  <state>1</state>
-                </option>
-                <option>
-                  <name>IExtraOptionsCheck</name>
-                  <state>1</state>
-                </option>
-                <option>
-                  <name>IExtraOptions</name>
-                  <state>--diag_suppress Pa050</state>
-                </option>
-                <option>
-                  <name>CCLangConformance</name>
-                  <state>0</state>
-                </option>
-                <option>
-                  <name>CCSignedPlainChar</name>
-                  <state>1</state>
-                </option>
-                <option>
-                  <name>CCRequirePrototypes</name>
-                  <state>0</state>
-                </option>
-                <option>
-                  <name>CCMultibyteSupport</name>
-                  <state>1</state>
-                </option>
-                <option>
-                  <name>CCDiagWarnAreErr</name>
-                  <state>0</state>
-                </option>
-                <option>
-                  <name>CCCompilerRuntimeInfo</name>
-                  <state>0</state>
-                </option>
-                <option>
-                  <name>IFpuProcessor</name>
-                  <state>1</state>
-                </option>
-                <option>
-                  <name>OutputFile</name>
-                  <state>$FILE_BNAME$.o</state>
-                </option>
-                <option>
-                  <name>CCLibConfigHeader</name>
-                  <state>1</state>
-                </option>
-                <option>
-                  <name>PreInclude</name>
-                  <state></state>
-                </option>
-                <option>
-                  <name>CompilerMisraOverride</name>
-                  <state>0</state>
-                </option>
-                <option>
-                  <name>CCIncludePath2</name>
-                  <state>$PROJ_DIR$\..\inc</state>
-                  <state>$PROJ_DIR$\..\STemWin_Addons</state>
-                  <state>$PROJ_DIR$\..\Config</state>
-                  <state>$PROJ_DIR$\..\Core\inc</state>
-                  <state>$PROJ_DIR$\..\STemWin_Addons</state>
-                  <state>$PROJ_DIR$\..\Modules\vnc_server</state>
-                  <state>$PROJ_DIR$\..\Utilities\CPU</state>
-                  <state>$PROJ_DIR$\..\Drivers\CMSIS\Include</state>
-                  <state>$PROJ_DIR$\..\Drivers\CMSIS\Device\ST\STM32F7xx\Include</state>
-                  <state>$PROJ_DIR$\..\Drivers\STM32F7xx_HAL_Driver\Inc</state>
-                  <state>$PROJ_DIR$\..\Drivers\BSP\STM32746G-Discovery</state>
-                  <state>$PROJ_DIR$\..\Drivers\BSP\Components</state>
-                  <state>$PROJ_DIR$\..\Drivers\BSP\Components\Common</state>
-                  <state>$PROJ_DIR$\..\Middlewares\ST\STM32_USB_Host_Library\Core\Inc</state>
-                  <state>$PROJ_DIR$\..\Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Inc</state>
-                  <state>$PROJ_DIR$\..\Middlewares\ST\STM32_USB_Device_Library\Class\MSC\Inc</state>
-                  <state>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\include\</state>
-                  <state>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\src\include\ipv4                                                              </state>
-                  <state>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\system</state>
-                  <state>$PROJ_DIR$\..\Middlewares\Third_Party\LwIP\system\OS</state>
-                  <state>$PROJ_DIR$\..\Middlewares\ST\STemWin\inc</state>
-                  <state>$PROJ_DIR$\..\Middlewares\Third_Party\FatFs\src</state>
-                  <state>$PROJ_DIR$\..\Middlewares\Third_Party\FatFs\src\drivers</state>
-                  <state>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\portable\IAR\ARM_CM7\r0p1</state>
-                  <state>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\include</state>
-                  <state>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\CMSIS_RTOS</state>
-                  <state>$PROJ_DIR$\..\Modules\audio_player\Addons\SpiritDSP_Equalizer</state>
-                  <state>$PROJ_DIR$\..\Modules\audio_player\Addons\SpiritDSP_LoudnessControl</state>
-                  <state>$PROJ_DIR$\..\ffmpeg-2.7.2\</state>
-                </option>
-                <option>
-                  <name>CCStdIncCheck</name>
-                  <state>0</state>
-                </option>
-                <option>
-                  <name>CCCodeSection</name>
-                  <state>.text</state>
-                </option>
-                <option>
-                  <name>IInterwork2</name>
-                  <state>0</state>
-                </option>
-                <option>
-                  <name>IProcessorMode2</name>
-                  <state>1</state>
-                </option>
-                <option>
-                  <name>CCOptLevel</name>
-                  <state>3</state>
-                </option>
-                <option>
-                  <name>CCOptStrategy</name>
-                  <version>0</version>
-                  <state>2</state>
-                </option>
-                <option>
-                  <name>CCOptLevelSlave</name>
-                  <state>3</state>
-                </option>
-                <option>
-                  <name>CompilerMisraRules98</name>
-                  <version>0</version>
-                  <state>1000111110110101101110011100111111101110011011000101110111101101100111111111111100110011111001110111001111111111111111111111111</state>
-                </option>
-                <option>
-                  <name>CompilerMisraRules04</name>
-                  <version>0</version>
-                  <state>111101110010111111111000110111111111111111111111111110010111101111010101111111111111111111111111101111111011111001111011111011111111111111111</state>
-                </option>
-                <option>
-                  <name>CCPosIndRopi</name>
-                  <state>0</state>
-                </option>
-                <option>
-                  <name>CCPosIndRwpi</name>
-                  <state>0</state>
-                </option>
-                <option>
-                  <name>CCPosIndNoDynInit</name>
-                  <state>0</state>
-                </option>
-                <option>
-                  <name>IccLang</name>
-                  <state>0</state>
-                </option>
-                <option>
-                  <name>IccCDialect</name>
-                  <state>1</state>
-                </option>
-                <option>
-                  <name>IccAllowVLA</name>
-                  <state>0</state>
-                </option>
-                <option>
-                  <name>IccCppDialect</name>
-                  <state>1</state>
-                </option>
-                <option>
-                  <name>IccExceptions</name>
-                  <state>1</state>
-                </option>
-                <option>
-                  <name>IccRTTI</name>
-                  <state>1</state>
-                </option>
-                <option>
-                  <name>IccStaticDestr</name>
-                  <state>1</state>
-                </option>
-                <option>
-                  <name>IccCppInlineSemantics</name>
-                  <state>1</state>
-                </option>
-                <option>
-                  <name>IccCmsis</name>
-                  <state>1</state>
-                </option>
-                <option>
-                  <name>IccFloatSemantics</name>
-                  <state>0</state>
-                </option>
-                <option>
-                  <name>CCNoLiteralPool</name>
-                  <state>0</state>
-                </option>
-                <option>
-                  <name>CCOptStrategySlave</name>
-                  <version>0</version>
-                  <state>2</state>
-                </option>
-              </data>
-            </settings>
-          </configuration>
         </file>
       </group>
       <group>
@@ -3253,9 +2969,6 @@
         </file>
         <file>
           <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\portable\MemMang\heap_4.c</name>
-          <excluded>
-            <configuration>ffmpeg</configuration>
-          </excluded>
         </file>
         <file>
           <name>$PROJ_DIR$\..\Middlewares\Third_Party\FreeRTOS\Source\portable\IAR\ARM_CM7\r0p1\port.c</name>

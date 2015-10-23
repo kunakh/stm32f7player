@@ -27,10 +27,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <string.h>
-#include "stm32f746xx.h"
 #include "ff_gen_drv.h"
 
-extern void *memalign(size_t align, size_t size);
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -115,29 +113,12 @@ DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
 {
   DRESULT res = RES_OK;
 
-  int allocated;
-  BYTE *buff_;
-  int32_t size;
-
-  // Check alignment
-  if(((uint32_t)buff & 0x03) != 0) {
-    size = BLOCK_SIZE * count;
-    buff_ = memalign(CACHE_LINE, size);
-    allocated = 1;
-  } else {
-    buff_ = buff;
-    allocated = 0;
-  }
-
-  if(BSP_SD_ReadBlocks_DMA((uint32_t*)buff_, (uint64_t) (sector * BLOCK_SIZE), BLOCK_SIZE, count)
-     != MSD_OK)
+  if(BSP_SD_ReadBlocks((uint32_t*)buff, 
+                       (uint64_t) (sector * BLOCK_SIZE), 
+                       BLOCK_SIZE, 
+                       count) != MSD_OK)
   {
     res = RES_ERROR;
-  }
-
-  if(allocated) {
-    memcpy(buff, buff_, size);
-    free(buff_);
   }
 
   return res;

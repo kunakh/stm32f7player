@@ -66,7 +66,7 @@
 
     1 tab == 4 spaces!
 */
-
+#ifdef RTOS_HEAP_IN_IRAM
 /*
  * A sample implementation of pvPortMalloc() and vPortFree() that combines
  * (coalescences) adjacent memory blocks as they are freed, and in so doing
@@ -471,4 +471,4 @@ uint8_t *puc;
 		mtCOVERAGE_TEST_MARKER();
 	}
 }
-
+#endif /* RTOS_HEAP_IN_IRAM */
