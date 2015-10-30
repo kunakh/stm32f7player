@@ -12,7 +12,7 @@ ByteLimit=50
 stlinkserialNo=114C5BB8
 stlinkfoundProbes=
 [DebugChecksum]
-Checksum=-1691618495
+Checksum=-1336773383
 [Exceptions]
 StopOnUncaught=_ 0
 StopOnThrow=_ 0
@@ -31,9 +31,9 @@ JtagSpeed=2000000
 Prescaler=108
 TimeStampPrescIndex=0
 TimeStampPrescData=0
-PcSampCYCTAP=1
-PcSampPOSTCNT=15
-PcSampIndex=0
+PcSampCYCTAP=0
+PcSampPOSTCNT=0
+PcSampIndex=31
 DataLogMode=0
 ITMportsEnable=1
 ITMportsTermIO=1
@@ -83,8 +83,7 @@ Bp0=_ 0 "EMUL_CODE" "0x9012C21E" 0 0 1 "" 0 "" 0
 Bp1=_ 0 "EMUL_CODE" "0x90137FD2" 0 0 1 "" 0 "" 0
 Bp2=_ 0 "EMUL_CODE" "0x90187C60" 0 0 1 "" 0 "" 0
 Bp3=_ 0 "EMUL_CODE" "0x901BD5BC" 0 0 1 "" 0 "" 0
-Bp4=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\play.c}.492.5" 0 0 1 "" 0 "" 0
-Count=5
+Count=4
 [Log file]
 LoggingEnabled=_ 0
 LogFile=_ ""

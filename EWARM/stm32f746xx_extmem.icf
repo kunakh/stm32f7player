@@ -41,16 +41,16 @@ do not initialize  { section .noinit };
 
 place at address mem:__ICFEDIT_intvec_start__ { readonly section .intvec };
 
-define block LIB_CODE with alignment = 4 {
+define block LIB_CODE {
     readonly object libavcodec.a,
-/*
-    readonly object libavdevice.a,
     readonly object libavfilter.a,
+    readonly object libavdevice.a,
     readonly object libavformat.a,
+/*
     readonly object libavutil.a,
     readonly object libswresample.a,
-    readonly object liblibswscale.a
 */
+    readonly object liblibswscale.a
 };
 
 /*
