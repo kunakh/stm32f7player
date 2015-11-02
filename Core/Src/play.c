@@ -564,7 +564,10 @@ static void reader_task_cb(void *arg)
 
     int framerate = vCodecCtx->framerate.num ?
       vCodecCtx->framerate.den * 1000 / vCodecCtx->framerate.num :
+      vCodecCtx->codec_id == CODEC_ID_H264 && vCodecCtx->time_base.num ?
+      vCodecCtx->time_base.num * 50000 / vCodecCtx->time_base.den :
       vCodecCtx->pkt_timebase.den/vCodecCtx->pkt_timebase.num;
+
     xTimerChangePeriod(video_timer, framerate, 0);
     xTimerStart(video_timer, 0);
 
